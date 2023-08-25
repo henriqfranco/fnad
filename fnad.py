@@ -298,7 +298,7 @@ while running:
                 screen.blit(frontimage1,(screensize[0]*scenarioX,0))
                 screen.blit(fan,(screensize[0]*scenarioX+(screensize[0]*0.8),screensize[1]*0.2))
                 screen.blit(fanblades_,(screensize[0]*scenarioX+(screensize[0]*0.888)-int(fanblades_.get_width()/2),screensize[1]*0.34-int(fanblades_.get_height()/2)))
-                if cellphoneY < 1.05 and pygame.mouse.get_pressed()[0]:
+                if cellphoneY < 1.05:
                     screen.blit(ingamevars["cellphonenow"],(screensize[0]*0.25,screensize[1]*cellphoneY))
                     if ingamevars["cellphonenow"] == cellphonecams:
                         if ingamevars["deovasincam"] == ingamevars["cam"]:
