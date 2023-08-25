@@ -579,4 +579,3 @@ while running:
             for file in glob.glob('assets/audios/tmp/*'):
                 os.remove(file)
             running = False
-#bumbum
