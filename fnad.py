@@ -107,8 +107,8 @@ vhsfontbig = pygame.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", int(screens
 dtime = vhsfont.render(f"{datetime.datetime.now().strftime('%H:%M')}", True, (255,255,255))
 ddate = vhsfont.render(f"{datetime.datetime.now().strftime('%b.%d %Y')}", True, (255,255,255))
 title = vhsfontbig.render(f"FIVE NIGHTS AT DEOVAS", True, (255,255,255))
-play = vhsfont.render(f"PLAY", True, (255,255,255))
-exit = vhsfont.render(f"EXIT", True, (255,255,255))
+play = vhsfont.render(f"JOGAR", True, (255,255,255))
+exit = vhsfont.render(f"SAIR", True, (255,255,255))
 
 #game assets and vars
 grabcell = pygame.image.load("assets/sprites/grabcell.png").convert_alpha()
@@ -193,19 +193,19 @@ while running:
             dtime = vhsfont.render(f"{datetime.datetime.now().strftime('%H:%M')}", True, (255,255,255))
             ddate = vhsfont.render(f"{datetime.datetime.now().strftime('%b.%d %Y')}", True, (255,255,255))
             title = vhsfontbig.render(f"FIVE NIGHTS AT DEOVAS", True, (255,255,255))
-            play = vhsfont.render(f"PLAY", True, (255,255,255))
-            exit = vhsfont.render(f"EXIT", True, (255,255,255))
+            play = vhsfont.render(f"JOGAR", True, (255,255,255))
+            exit = vhsfont.render(f"SAIR", True, (255,255,255))
 
             if pygame.mouse.get_pos()[0] > screensize[0]*0.46 and pygame.mouse.get_pos()[0] < screensize[0]*0.46+play.get_rect()[2] and \
                 pygame.mouse.get_pos()[1] > screensize[1]*0.4 and pygame.mouse.get_pos()[1] < screensize[1]*0.4+play.get_rect()[3]:
                     if not pygame.mouse.get_pressed()[0]:
-                        play = vhsfont.render(f"PLAY", True, (0,0,255))
+                        play = vhsfont.render(f"JOGAR", True, (0,0,255))
                     else:
                         state = "game"
             if pygame.mouse.get_pos()[0] > screensize[0]*0.46 and pygame.mouse.get_pos()[0] < screensize[0]*0.46+exit.get_rect()[2] and \
                 pygame.mouse.get_pos()[1] > screensize[1]*0.6 and pygame.mouse.get_pos()[1] < screensize[1]*0.6+exit.get_rect()[3]:
                     if not pygame.mouse.get_pressed()[0]:
-                        exit = vhsfont.render(f"EXIT", True, (255,0,0))
+                        exit = vhsfont.render(f"SAIR", True, (255,0,0))
                     else:
                         pygame.quit()
 
