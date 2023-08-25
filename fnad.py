@@ -97,7 +97,9 @@ ingamevars = {"battery": 100000,
               "backdoor": False,
               "fan": False,
               "heat": 0,
-              "time": 0}
+              "time": 0,
+              "cam": 0,
+              "deovasincam":0}
 
 #menu assets and vars        
 menuvideo = pgvideo("assets/videos/menu.mp4",loop=True,audio=False)
@@ -111,7 +113,7 @@ play = vhsfont.render(f"JOGAR", True, (255,255,255))
 exit = vhsfont.render(f"SAIR", True, (255,255,255))
 
 #game assets and vars
-grabcell = pygame.image.load("assets/sprites/grabcell.png").convert_alpha()
+grabcell = pygame.image.load("assets/sprites/switch/grabcell.png").convert_alpha()
 grabcell = pygame.transform.scale(grabcell, (screensize[0]*0.5,screensize[1]*0.08))
 grabcell.set_alpha(80)
 
@@ -125,26 +127,26 @@ battery = phonefont.render(f"B: {int(ingamevars['battery'])}%", True, (255,255,2
 cellphonespeed = 0
 cellphoneY = 1.05
 
-cellphoneflash = pygame.image.load("assets/sprites/cellphone-flash.png").convert_alpha()
+cellphoneflash = pygame.image.load("assets/sprites/cellphone/cellphone-flash.png").convert_alpha()
 cellphoneflash = pygame.transform.scale(cellphoneflash, (screensize[0]*0.5,screensize[1]*0.9))
-cellphoneaudio = pygame.image.load("assets/sprites/cellphone-audio.png").convert_alpha()
+cellphoneaudio = pygame.image.load("assets/sprites/cellphone/cellphone-audio.png").convert_alpha()
 cellphoneaudio = pygame.transform.scale(cellphoneaudio, (screensize[0]*0.5,screensize[1]*0.9))
-lock = pygame.image.load("assets/sprites/lock2.png").convert_alpha()
+lock = pygame.image.load("assets/sprites/cellphone/lock2.png").convert_alpha()
 lock = pygame.transform.scale(lock, (screensize[0]*0.025,screensize[1]*0.05))
-cellphonecams = pygame.image.load("assets/sprites/cellphone-cams.png").convert_alpha()
+cellphonecams = pygame.image.load("assets/sprites/cellphone/cellphone-cams.png").convert_alpha()
 cellphonecams = pygame.transform.scale(cellphonecams, (screensize[0]*0.66,screensize[1]*1.15))
-cellphonebattery = pygame.image.load("assets/sprites/cellphone-battery.png").convert_alpha()
+cellphonebattery = pygame.image.load("assets/sprites/cellphone/cellphone-battery.png").convert_alpha()
 cellphonebattery = pygame.transform.scale(cellphonebattery, (screensize[0]*0.5,screensize[1]*0.9))
-cellphonehome = pygame.image.load("assets/sprites/cellphone-home.png").convert_alpha()
+cellphonehome = pygame.image.load("assets/sprites/cellphone/cellphone-home.png").convert_alpha()
 cellphonehome = pygame.transform.scale(cellphonehome, (screensize[0]*0.5,screensize[1]*0.9))
 ingamevars["cellphonenow"] = cellphonehome
 audiodelay = 1
 
-fan = pygame.image.load("assets/sprites/fan.png").convert_alpha()
+fan = pygame.image.load("assets/sprites/fan/fan.png").convert_alpha()
 fan = pygame.transform.scale(fan,(screensize[0]*0.176,screensize[1]*0.43))
 fan.set_alpha(0)
 
-fanblades = pygame.image.load("assets/sprites/fanblades.png").convert_alpha()
+fanblades = pygame.image.load("assets/sprites/fan/fanblades.png").convert_alpha()
 fanblades = pygame.transform.scale(fanblades,(screensize[0]*0.108,screensize[0]*0.108))
 fanblades_ = fanblades
 fanbladesrotation = 0
@@ -156,17 +158,17 @@ frontimage1.set_alpha(0)
 scenariospeed = 0
 scenarioX = 0
 
-godumpingroom = pygame.image.load("assets/sprites/godumpingroom.png").convert_alpha()
+godumpingroom = pygame.image.load("assets/sprites/switch/godumpingroom.png").convert_alpha()
 godumpingroom = pygame.transform.scale(godumpingroom, (screensize[0]*0.065,screensize[1]*0.7))
 godumpingroom.set_alpha(80)
 
-backimage11 = pygame.image.load("assets/images/backimage1-1.png").convert_alpha()
-backimage11 = pygame.transform.scale(backimage11, screensize)
-backimage11.set_alpha(0)
+backimage1open = pygame.image.load("assets/images/backimage1-open.png").convert_alpha()
+backimage1open = pygame.transform.scale(backimage1open, screensize)
+backimage1open.set_alpha(0)
 
-backimage12 = pygame.image.load("assets/images/backimage1-2.png").convert_alpha()
-backimage12 = pygame.transform.scale(backimage12, screensize)
-backimage12.set_alpha(0)
+backimage1closed = pygame.image.load("assets/images/backimage1-closed.png").convert_alpha()
+backimage1closed = pygame.transform.scale(backimage1closed, screensize)
+backimage1closed.set_alpha(0)
 
 backimage2 = pygame.image.load("assets/images/backimage2.png").convert_alpha()
 backimage2 = pygame.transform.scale(backimage2, (screensize[0],screensize[1]*1.5))
@@ -181,6 +183,17 @@ faintimage.set_alpha(0)
 chargingtimer = 900
 
 debugfont = pygame.font.Font("assets/fonts/LUCON.TTF", int(screensize[0]*0.012))
+
+currentcamnumber = phonefont.render(f"{ingamevars['cam']}", True, (255,255,255))
+camdelay = 0
+camdeovasin = []
+camdeovasout = []
+
+for cam in range(8):
+    camdeovasin.append(pygame.image.load(f"assets/sprites/cellphone/cams/deovasin/cellphone-cam{cam}.png").convert_alpha())
+    camdeovasin[-1] = pygame.transform.scale(camdeovasin[-1], (screensize[0]*0.66,screensize[1]*1.15))
+    camdeovasout.append(pygame.image.load(f"assets/sprites/cellphone/cams/deovasout/cellphone-cam{cam}.png").convert_alpha())
+    camdeovasout[-1] = pygame.transform.scale(camdeovasout[-1], (screensize[0]*0.66,screensize[1]*1.15))
 
 #start
 running = True
@@ -285,14 +298,19 @@ while running:
                 screen.blit(frontimage1,(screensize[0]*scenarioX,0))
                 screen.blit(fan,(screensize[0]*scenarioX+(screensize[0]*0.8),screensize[1]*0.2))
                 screen.blit(fanblades_,(screensize[0]*scenarioX+(screensize[0]*0.888)-int(fanblades_.get_width()/2),screensize[1]*0.34-int(fanblades_.get_height()/2)))
-                if cellphoneY < 1.05:
+                if cellphoneY < 1.05 and pygame.mouse.get_pressed()[0]:
                     screen.blit(ingamevars["cellphonenow"],(screensize[0]*0.25,screensize[1]*cellphoneY))
+                    if ingamevars["cellphonenow"] == cellphonecams:
+                        if ingamevars["deovasincam"] == ingamevars["cam"]:
+                            screen.blit(camdeovasin[ingamevars["cam"]],(screensize[0]*0.25,screensize[1]*cellphoneY))
+                        else:
+                            screen.blit(camdeovasout[ingamevars["cam"]],(screensize[0]*0.25,screensize[1]*cellphoneY))
 
             if ingamevars["action"] == "outdumpingroom":
                 if not ingamevars["backdoor"]:
-                    screen.blit(backimage11,(0,0))
+                    screen.blit(backimage1open,(0,0))
                 else:
-                    screen.blit(backimage12,(0,0))
+                    screen.blit(backimage1closed,(0,0))
             if ingamevars["action"] == "indumpingroom":
                 screen.blit(backimage2,(0,screensize[1]*scenarioY))
             if ingamevars["action"] == "cellphone" and ingamevars["battery"] > 0:
@@ -302,6 +320,7 @@ while running:
                 else:
                     screen.blit(battery, (screensize[0]*0.62,screensize[1]*cellphoneY*-0.3))
                     screen.blit(time, (screensize[0]*0.569,screensize[1]*cellphoneY*-0.3))
+                    screen.blit(currentcamnumber, (screensize[0]*0.64,screensize[1]*0.685))
                 if ingamevars["cellphonenow"] == cellphoneaudio:
                     for lockaudio in range(3-ingamevars["audiosleft"]):
                         screen.blit(lock,(screensize[0]*0.394,screensize[1]*cellphoneY*5.8+(1.3*lockaudio*lock.get_height())))
@@ -325,8 +344,8 @@ while running:
                     fan.set_alpha(fan.get_alpha()+10)
                     fanblades_.set_alpha(fan.get_alpha())
                     frontimage1.set_alpha(frontimage1.get_alpha()+10)
-                    backimage11.set_alpha(backimage11.get_alpha()-10)
-                    backimage12.set_alpha(backimage12.get_alpha()-10)
+                    backimage1open.set_alpha(backimage1open.get_alpha()-10)
+                    backimage1closed.set_alpha(backimage1closed.get_alpha()-10)
                     backimage2.set_alpha(backimage2.get_alpha()-10)
                     grabcell.set_alpha(80)
                     if ingamevars["fan"]:
@@ -425,6 +444,21 @@ while running:
                         pygame.mouse.get_pressed()[0]:
                             cellphonespeed = 0.01
                             ingamevars["cellphonenow"] = cellphonehome
+                    currentcamnumber = phonefont.render(f"{ingamevars['cam']}", True, (255,255,255))
+                    currentcamnumber = pygame.transform.scale_by(currentcamnumber,1.5)
+                    camdelay -=1
+                    if ingamevars["action"] == "cellphone" and ingamevars["cellphonenow"] == cellphonecams and \
+                        pygame.mouse.get_pos()[0] > screensize[0]*0.627 and pygame.mouse.get_pos()[0] < screensize[0]*0.664 and \
+                        pygame.mouse.get_pressed()[0] and\
+                            camdelay <=0:
+                            if pygame.mouse.get_pos()[1] > screensize[1]*0.595 and pygame.mouse.get_pos()[1] < screensize[1]*0.67 and\
+                                ingamevars["cam"] < 7:
+                                    ingamevars["cam"] +=1
+                                    camdelay = 30
+                            elif pygame.mouse.get_pos()[1] > screensize[1]*0.73 and pygame.mouse.get_pos()[1] < screensize[1]*0.805 and\
+                                ingamevars["cam"] > 0:
+                                    ingamevars["cam"] -=1
+                                    camdelay = 30
 
                     #cellphone home
                     if ingamevars["action"] == "cellphone" and ingamevars["cellphonenow"] not in [cellphonehome,cellphonecams] and \
@@ -481,19 +515,19 @@ while running:
                     
             #door of dumping room
             if ingamevars["action"]  == "outdumpingroom":
-                if backimage11.get_alpha() != 255 and not ingamevars["backdoor"]:
+                if backimage1open.get_alpha() != 255 and not ingamevars["backdoor"]:
                     fan.set_alpha(fan.get_alpha()-10)
                     fanblades_.set_alpha(fan.get_alpha())
                     frontimage1.set_alpha(frontimage1.get_alpha()-10)
-                    backimage11.set_alpha(backimage11.get_alpha()+10)
+                    backimage1open.set_alpha(backimage1open.get_alpha()+10)
                     grabcell.set_alpha(0)
                     if ingamevars["fan"]:
                         fansoundo.set_volume(0.6)
-                elif backimage12.get_alpha() != 255 and ingamevars["backdoor"]:
+                elif backimage1closed.get_alpha() != 255 and ingamevars["backdoor"]:
                     fan.set_alpha(fan.get_alpha()-10)
                     fanblades_.set_alpha(fan.get_alpha())
                     frontimage1.set_alpha(frontimage1.get_alpha()-10)
-                    backimage12.set_alpha(backimage12.get_alpha()+10)
+                    backimage1closed.set_alpha(backimage1closed.get_alpha()+10)
                     grabcell.set_alpha(0)
                     if ingamevars["fan"]:
                         fansoundo.set_volume(0.6)
@@ -508,11 +542,11 @@ while running:
                     if pygame.mouse.get_pos()[0] > screensize[0]*0.7 and pygame.mouse.get_pressed()[0]:
                         if not ingamevars["backdoor"]:
                             ingamevars["backdoor"] = True
-                            backimage11.set_alpha(0)
+                            backimage1open.set_alpha(0)
                         else:
                             ingamevars["backdoor"] = False
-                            backimage11.set_alpha(0)
-                            backimage12.set_alpha(0)
+                            backimage1open.set_alpha(0)
+                            backimage1closed.set_alpha(0)
                     if not ingamevars["backdoor"] and\
                         pygame.mouse.get_pos()[0] < screensize[0]*0.7 and pygame.mouse.get_pos()[0] > screensize[0]*0.2 and\
                         pygame.mouse.get_pressed()[0]:
@@ -524,8 +558,8 @@ while running:
                 if backimage2.get_alpha() != 255:
                     scenariospeed = 0
                     backimage2.set_alpha(backimage2.get_alpha()+10)
-                    backimage11.set_alpha(backimage11.get_alpha()-10)
-                    backimage12.set_alpha(backimage12.get_alpha()-10)
+                    backimage1open.set_alpha(backimage1open.get_alpha()-10)
+                    backimage1closed.set_alpha(backimage1closed.get_alpha()-10)
                 else:
                     if scenarioY == -0.5 and scenariospeed == -0.01:
                         scenariospeed = 0
