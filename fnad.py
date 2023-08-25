@@ -196,7 +196,7 @@ while running:
             play = vhsfont.render(f"JOGAR", True, (255,255,255))
             exit = vhsfont.render(f"SAIR", True, (255,255,255))
 
-            if pygame.mouse.get_pos()[0] > screensize[0]*0.46 and pygame.mouse.get_pos()[0] < screensize[0]*0.46+play.get_rect()[2] and \
+            if pygame.mouse.get_pos()[0] > screensize[0]*0.45 and pygame.mouse.get_pos()[0] < screensize[0]*0.45+play.get_rect()[2] and \
                 pygame.mouse.get_pos()[1] > screensize[1]*0.4 and pygame.mouse.get_pos()[1] < screensize[1]*0.4+play.get_rect()[3]:
                     if not pygame.mouse.get_pressed()[0]:
                         play = vhsfont.render(f"JOGAR", True, (0,0,255))
@@ -213,7 +213,7 @@ while running:
             screen.blit(dtime, (screensize[0]*0.1,screensize[1]*0.766))
             screen.blit(ddate, (screensize[0]*0.1,screensize[1]*0.833))
             screen.blit(title, (screensize[0]*0.25,screensize[1]*0.1))
-            screen.blit(play, (screensize[0]*0.46,screensize[1]*0.4))
+            screen.blit(play, (screensize[0]*0.45,screensize[1]*0.4))
             screen.blit(exit, (screensize[0]*0.46,screensize[1]*0.6))
             if realframe == 2: # game/video fps difference fix
                 oldframe = pygame.transform.scale(menuvideo.frame(), screensize)
