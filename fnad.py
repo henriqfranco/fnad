@@ -9,9 +9,9 @@ import random
 currentres = (1280,720)
 currentfull = False
 while True:
-    print("---Five Nights At Deovas: O Dopaganger---\n")
-    print(f"Resolução atual:{currentres}")
-    print(f"Tela Cheia:{currentfull}")
+    print("---Five Nights At Deovas': O Dopaganger---\n")
+    print(f"Resolução atual: {currentres}")
+    print(f"Tela Cheia: {currentfull}")
     print("1 - Alterar Resolução")
     print("2 - Ativar/desativar tela cheia")
     print("3 - Jogar")
@@ -39,6 +39,8 @@ while True:
                         currentres = uinput
                     except:
                         print("Erro ao definir resolução personalizada")
+                case _:
+                    print("Seleção inválida")
         case "2":
             currentfull = not currentfull
         case "3":
@@ -51,13 +53,16 @@ pygame.init()
 pygame.font.init()
 screensize = currentres
 fps = 60
-screen = pygame.display.set_mode(screensize, pygame.DOUBLEBUF) #|pygame.FULLSCREEN
+if currentfull:
+    screen = pygame.display.set_mode(screensize, pygame.DOUBLEBUF|pygame.FULLSCREEN) #|pygame.FULLSCREEN
+else:
+    screen = pygame.display.set_mode(screensize, pygame.DOUBLEBUF)
 clock = pygame.time.Clock()
 vhsfont = pygame.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", int(screensize[0]*0.031))
 loading = vhsfont.render(f"Loading", True, (255,255,255))
 screen.blit(loading, (0,0))
 pygame.display.flip()
-pygame.display.set_caption("Five Nights At Deovas: O Dopaganger")
+pygame.display.set_caption("Five Nights At Deovas': O Dopaganger")
 
 class pgvideo:
     def __init__(self, file:str, loop:bool, audio:bool):
@@ -85,6 +90,28 @@ class pgvideo:
                 self.ended = True
         return pygame.image.frombuffer(img.tobytes(), img.shape[1::-1], "BGR")
 
+def deovasmovement(pos, difficulty):
+    if random.randint(0,20) < difficulty:
+        if pos == 0:
+            newpos = 3
+        elif pos == 1:
+            newpos = random.choice([4,10,12])
+        elif pos == 2:
+            newpos = random.choice([1,3])
+        elif pos == 3:
+            newpos = random.choice([0,1])
+        elif pos == 4:
+            newpos = 1
+        elif pos == 10:
+            newpos = 11
+        elif pos == 11:
+            newpos = 20
+        elif pos == 12:
+            newpos = 21
+    else:
+        newpos = pos
+    return newpos
+
 #general assets and vars
 debug = False
 realframe = 1
@@ -99,7 +126,8 @@ ingamevars = {"battery": 100000,
               "heat": 0,
               "time": 0,
               "cam": 0,
-              "deovasincam":0}
+              "deovaspos": 2,
+              "difficulty": [0,0]}
 
 #menu assets and vars        
 menuvideo = pgvideo("assets/videos/menu.mp4",loop=True,audio=False)
@@ -108,7 +136,7 @@ vhsfont = pygame.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", int(screensize
 vhsfontbig = pygame.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", int(screensize[0]*0.039))
 dtime = vhsfont.render(f"{datetime.datetime.now().strftime('%H:%M')}", True, (255,255,255))
 ddate = vhsfont.render(f"{datetime.datetime.now().strftime('%b.%d %Y')}", True, (255,255,255))
-title = vhsfontbig.render(f"FIVE NIGHTS AT DEOVAS", True, (255,255,255))
+title = vhsfontbig.render(f"FIVE NIGHTS AT DEOVAS'", True, (255,255,255))
 play = vhsfont.render(f"JOGAR", True, (255,255,255))
 exit = vhsfont.render(f"SAIR", True, (255,255,255))
 
@@ -147,7 +175,7 @@ fan = pygame.transform.scale(fan,(screensize[0]*0.176,screensize[1]*0.43))
 fan.set_alpha(0)
 
 fanblades = pygame.image.load("assets/sprites/fan/fanblades.png").convert_alpha()
-fanblades = pygame.transform.scale(fanblades,(screensize[0]*0.108,screensize[0]*0.108))
+fanblades = pygame.transform.scale(fanblades,(screensize[0]*0.107,screensize[0]*0.107))
 fanblades_ = fanblades
 fanbladesrotation = 0
 fanbladesoff = 100
@@ -189,11 +217,13 @@ camdelay = 0
 camdeovasin = []
 camdeovasout = []
 
-for cam in range(8):
+for cam in range(5):
     camdeovasin.append(pygame.image.load(f"assets/sprites/cellphone/cams/deovasin/cellphone-cam{cam}.png").convert_alpha())
     camdeovasin[-1] = pygame.transform.scale(camdeovasin[-1], (screensize[0]*0.66,screensize[1]*1.15))
     camdeovasout.append(pygame.image.load(f"assets/sprites/cellphone/cams/deovasout/cellphone-cam{cam}.png").convert_alpha())
     camdeovasout[-1] = pygame.transform.scale(camdeovasout[-1], (screensize[0]*0.66,screensize[1]*1.15))
+
+moveloop = 300
 
 #start
 running = True
@@ -205,7 +235,7 @@ while running:
         if section == "main":
             dtime = vhsfont.render(f"{datetime.datetime.now().strftime('%H:%M')}", True, (255,255,255))
             ddate = vhsfont.render(f"{datetime.datetime.now().strftime('%b.%d %Y')}", True, (255,255,255))
-            title = vhsfontbig.render(f"FIVE NIGHTS AT DEOVAS", True, (255,255,255))
+            title = vhsfontbig.render(f"FIVE NIGHTS AT DEOVAS'", True, (255,255,255))
             play = vhsfont.render(f"JOGAR", True, (255,255,255))
             exit = vhsfont.render(f"SAIR", True, (255,255,255))
 
@@ -215,6 +245,7 @@ while running:
                         play = vhsfont.render(f"JOGAR", True, (0,0,255))
                     else:
                         state = "game"
+                        section = "night5"
             if pygame.mouse.get_pos()[0] > screensize[0]*0.46 and pygame.mouse.get_pos()[0] < screensize[0]*0.46+exit.get_rect()[2] and \
                 pygame.mouse.get_pos()[1] > screensize[1]*0.6 and pygame.mouse.get_pos()[1] < screensize[1]*0.6+exit.get_rect()[3]:
                     if not pygame.mouse.get_pressed()[0]:
@@ -225,7 +256,7 @@ while running:
 
             screen.blit(dtime, (screensize[0]*0.1,screensize[1]*0.766))
             screen.blit(ddate, (screensize[0]*0.1,screensize[1]*0.833))
-            screen.blit(title, (screensize[0]*0.25,screensize[1]*0.1))
+            screen.blit(title, (screensize[0]*0.248,screensize[1]*0.1))
             screen.blit(play, (screensize[0]*0.45,screensize[1]*0.4))
             screen.blit(exit, (screensize[0]*0.46,screensize[1]*0.6))
             if realframe == 2: # game/video fps difference fix
@@ -272,7 +303,7 @@ while running:
 
             #faint
             if ingamevars["time"] % 2 == 0:
-                if ingamevars["heat"] >= 1200 and not ingamevars["fan"]:
+                if ingamevars["heat"] >= 1200:
                     faintimage.set_alpha(faintimage.get_alpha()+1)
                 else:
                     faintimage.set_alpha(faintimage.get_alpha()-1)
@@ -301,7 +332,7 @@ while running:
                 if cellphoneY < 1.05:
                     screen.blit(ingamevars["cellphonenow"],(screensize[0]*0.25,screensize[1]*cellphoneY))
                     if ingamevars["cellphonenow"] == cellphonecams:
-                        if ingamevars["deovasincam"] == ingamevars["cam"]:
+                        if ingamevars["deovaspos"] == ingamevars["cam"]:
                             screen.blit(camdeovasin[ingamevars["cam"]],(screensize[0]*0.25,screensize[1]*cellphoneY))
                         else:
                             screen.blit(camdeovasout[ingamevars["cam"]],(screensize[0]*0.25,screensize[1]*cellphoneY))
@@ -452,7 +483,7 @@ while running:
                         pygame.mouse.get_pressed()[0] and\
                             camdelay <=0:
                             if pygame.mouse.get_pos()[1] > screensize[1]*0.595 and pygame.mouse.get_pos()[1] < screensize[1]*0.67 and\
-                                ingamevars["cam"] < 7:
+                                ingamevars["cam"] < 4:
                                     ingamevars["cam"] +=1
                                     camdelay = 30
                             elif pygame.mouse.get_pos()[1] > screensize[1]*0.73 and pygame.mouse.get_pos()[1] < screensize[1]*0.805 and\
@@ -593,11 +624,36 @@ while running:
                         screen.fill((0,0,200),(screensize[0]*0.01,screensize[1]-screensize[1]*0.03,chargingtimer*(screensize[0]*0.00109),screensize[1]*0.02))
                     else:
                         godumpingroom.set_alpha(80)
+            #deovas ai
+            moveloop -= 1
+            if moveloop <= 0:
+                ingamevars["deovaspos"] = deovasmovement(ingamevars["deovaspos"],ingamevars["difficulty"][0])
+                print(ingamevars["deovaspos"])
+                if ingamevars["deovaspos"] == 20:
+                    if not ingamevars["backdoor"]:
+                        #jumpscare
+                        print("dead")
+                    else:
+                        ingamevars["deovaspos"] = random.choice([2,11])
+
+                if ingamevars["deovaspos"] == 21:
+                    if ingamevars["cellphonenow"] != cellphoneflash:
+                        #jumpscare
+                        print("dead")
+                    else:
+                        ingamevars["deovaspos"] = random.choice([2,12])
+                moveloop = 300
 
 
-        
-    if section == "test":
-        pass
+
+
+            init = False
+            if section == "night5":
+                if not init:
+                    ingamevars["difficulty"] = [10,8]
+                    init = True
+                    
+                        
     if realframe == 2:
         realframe = 0
     pygame.display.flip()
