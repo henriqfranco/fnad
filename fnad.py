@@ -59,7 +59,7 @@ else:
     screen = pygame.display.set_mode(screensize, pygame.DOUBLEBUF)
 clock = pygame.time.Clock()
 vhsfont = pygame.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", int(screensize[0]*0.031))
-loading = vhsfont.render(f"Loading", True, (255,255,255))
+loading = vhsfont.render("Loading", True, (255,255,255))
 screen.blit(loading, (0,0))
 pygame.display.flip()
 pygame.display.set_caption("Five Nights At Deovas': O Dopaganger")
@@ -74,13 +74,13 @@ class pgvideo:
         self.framecount = self.video.get(cv2.CAP_PROP_FRAME_COUNT)
         self.baseres = (self.video.get(cv2.CAP_PROP_FRAME_WIDTH),self.video.get(cv2.CAP_PROP_FRAME_HEIGHT))
         if self.audio:
-            VideoFileClip(self.file).audio.write_audiofile(f"assets/audios/tmp/{self.file.split('/')[-1].split('.')[0]}.mp3")
+            VideoFileClip(self.file).audio.write_audiofile(f"assets/tmp/{self.file.split('/')[-1].split('.')[0]}.mp3")
 
     def frame(self):
         success, img = self.video.read()
         self.currentframe = self.video.get(cv2.CAP_PROP_POS_FRAMES)
         if self.currentframe == 1.0 and self.audio:
-            videoaudio = pygame.mixer.Sound(f"assets/audios/tmp/{self.file.split('/')[-1].split('.')[0]}.mp3")
+            videoaudio = pygame.mixer.Sound(f"assets/tmp/{self.file.split('/')[-1].split('.')[0]}.mp3")
             pygame.mixer.find_channel().play(videoaudio)
 
         if self.currentframe == self.framecount:
@@ -112,6 +112,16 @@ def deovasmovement(pos, difficulty):
         newpos = pos
     return newpos
 
+def lurgamovement(pos, difficulty):
+    if random.randint(0,20) < difficulty:
+        if pos == 0:
+            newpos = 1
+        elif pos == 1:
+            newpos = 20
+    else:
+        newpos = pos
+    return newpos
+
 #general assets and vars
 debug = False
 realframe = 1
@@ -127,6 +137,7 @@ ingamevars = {"battery": 100000,
               "time": 0,
               "cam": 0,
               "deovaspos": 2,
+              "lurgapos":0,
               "difficulty": [0,0]}
 
 #menu assets and vars        
@@ -180,6 +191,8 @@ fanblades_ = fanblades
 fanbladesrotation = 0
 fanbladesoff = 100
 
+frontimage1deovas = pygame.image.load("assets/images/frontimage1-deovas.png").convert_alpha()
+frontimage1deovas = pygame.transform.scale(frontimage1deovas, (screensize[0]*1.5,screensize[1]))
 frontimage1 = pygame.image.load("assets/images/frontimage1.png").convert_alpha()
 frontimage1 = pygame.transform.scale(frontimage1, (screensize[0]*1.5,screensize[1]))
 frontimage1.set_alpha(0)
@@ -198,6 +211,8 @@ backimage1closed = pygame.image.load("assets/images/backimage1-closed.png").conv
 backimage1closed = pygame.transform.scale(backimage1closed, screensize)
 backimage1closed.set_alpha(0)
 
+backimage2deova = pygame.image.load("assets/images/backimage2-deova.png").convert_alpha()
+backimage2deova = pygame.transform.scale(backimage2deova, (screensize[0],screensize[1]*1.5))
 backimage2 = pygame.image.load("assets/images/backimage2.png").convert_alpha()
 backimage2 = pygame.transform.scale(backimage2, (screensize[0],screensize[1]*1.5))
 backimage2.set_alpha(0)
@@ -307,6 +322,9 @@ while running:
                     faintimage.set_alpha(faintimage.get_alpha()+1)
                 else:
                     faintimage.set_alpha(faintimage.get_alpha()-1)
+            if faintimage.get_alpha() == 255:
+                #jumpscare
+                print("dead")
 
             #fan
             if ingamevars["fan"]:
@@ -326,7 +344,10 @@ while running:
                 fanbladesrotation += 100-fanbladesoff
             
             if ingamevars["action"] in ["normal","cellphone"]:
-                screen.blit(frontimage1,(screensize[0]*scenarioX,0))
+                if ingamevars["deovaspos"] != 12 or ingamevars["cellphonenow"] != cellphoneflash:
+                    screen.blit(frontimage1,(screensize[0]*scenarioX,0))
+                else:
+                    screen.blit(frontimage1deovas,(screensize[0]*scenarioX,0))
                 screen.blit(fan,(screensize[0]*scenarioX+(screensize[0]*0.8),screensize[1]*0.2))
                 screen.blit(fanblades_,(screensize[0]*scenarioX+(screensize[0]*0.888)-int(fanblades_.get_width()/2),screensize[1]*0.34-int(fanblades_.get_height()/2)))
                 if cellphoneY < 1.05:
@@ -343,7 +364,10 @@ while running:
                 else:
                     screen.blit(backimage1closed,(0,0))
             if ingamevars["action"] == "indumpingroom":
-                screen.blit(backimage2,(0,screensize[1]*scenarioY))
+                if ingamevars["deovaspos"] != 11:
+                    screen.blit(backimage2,(0,screensize[1]*scenarioY))
+                else:
+                    screen.blit(backimage2deova,(0,screensize[1]*scenarioY))
             if ingamevars["action"] == "cellphone" and ingamevars["battery"] > 0:
                 if ingamevars["cellphonenow"] != cellphonecams:
                     screen.blit(battery, (screensize[0]*0.558,screensize[1]*cellphoneY*3.1))
@@ -355,8 +379,9 @@ while running:
                 if ingamevars["cellphonenow"] == cellphoneaudio:
                     for lockaudio in range(3-ingamevars["audiosleft"]):
                         screen.blit(lock,(screensize[0]*0.394,screensize[1]*cellphoneY*5.8+(1.3*lockaudio*lock.get_height())))
-                if ingamevars["cellphonenow"] == cellphoneflash:
-                    pass
+                # if ingamevars["cellphonenow"] == cellphoneflash:
+                #     pass
+
             if faintimage.get_alpha() > 0:
                 screen.blit(faintimage,(0,0))
             if godumpingroom.get_alpha() != 0:   
@@ -367,7 +392,7 @@ while running:
             screen.fill((0,0,0),(screensize[0]*0.021,screensize[1]*0.071,heat.get_width()*1,int(screensize[0]*0.015)))
             screen.fill(heatcolor,(screensize[0]*0.02,screensize[1]*0.07,ingamevars["heat"]*heat.get_width()*0.00082,int(screensize[0]*0.014)))
             if debug:
-                info = debugfont.render(f"fps: {round(clock.get_fps(),1)} frametime(raw):{clock.get_time()}({clock.get_rawtime()}) time: {ingamevars['time']}/29635 battery:{ingamevars['battery']} heat:{ingamevars['heat']}", False, (126,126,126))
+                info = debugfont.render(f"fps: {round(clock.get_fps(),1)} frametime(raw):{clock.get_time()}({clock.get_rawtime()}) time: {ingamevars['time']}/29635 battery:{ingamevars['battery']} heat:{ingamevars['heat']} deovaspos: {ingamevars['deovaspos']} lurgapos: {ingamevars['lurgapos']}", False, (126,126,126))
                 screen.blit(info, (0,0))
             if ingamevars["action"] in ["normal", "cellphone"]:
                 if frontimage1.get_alpha() != 255:
@@ -401,9 +426,8 @@ while running:
                         scenariospeed = 0
 
                     # cellphone grab and store
-                    if ingamevars["cellphonenow"] != cellphonecams:
-                        if cellphoneY == 0.05 and (cellphonespeed in [0.01,-0.1]):
-                            cellphonespeed = 0
+                    if ingamevars["cellphonenow"] != cellphonecams and (cellphoneY == 0.05 and (cellphonespeed in [0.01,-0.1])):
+                        cellphonespeed = 0
                     if cellphoneY >= 1.05 and (cellphonespeed in [0.01,0.1]):
                         cellphonespeed = 0
                         cellphoneY = 1.05
@@ -427,13 +451,12 @@ while running:
                         grabcell.set_alpha(80)
 
                     # cellphone battery
-                    if ingamevars["battery"] < 0 and ingamevars["action"] == "cellphone":
-                        if cellphoneY <= 0.05:
-                            ingamevars["cellphonenow"] = cellphonebattery
-                            cellnobattery = pygame.mixer.Sound(f"assets/audios/nobattery.mp3")
-                            pygame.mixer.find_channel().play(cellnobattery)
-                            ingamevars["action"] = "normal"
-                            cellphonespeed = 0.1
+                    if ingamevars["battery"] < 0 and ingamevars["action"] == "cellphone" and cellphoneY <= 0.05:
+                        ingamevars["cellphonenow"] = cellphonebattery
+                        cellnobattery = pygame.mixer.Sound(f"assets/audios/nobattery.mp3")
+                        pygame.mixer.find_channel().play(cellnobattery)
+                        ingamevars["action"] = "normal"
+                        cellphonespeed = 0.1
 
                     if ingamevars["battery"] < 33333:
                         battery = phonefont.render(f"B: {int(ingamevars['battery']*0.001)}%", True, (155,0,0))
@@ -464,6 +487,11 @@ while running:
                             pygame.mixer.find_channel().play(audioapp)
                             audiodelay = 80
                     audiodelay -=1
+                    if audiodelay == 81 and ingamevars["lurgapos"] == 1:
+                        ingamevars["lurgapos"] = 0
+                        lurgaudio = pygame.mixer.Sound(f"assets/audios/lurgscared{random.randint(0,5)}.mp3")
+                        pygame.mixer.find_channel().play(lurgaudio)
+                    print(audiodelay)
 
                     #cellphone cams
                     if cellphoneY <= -0.10 and (cellphonespeed in [-0.01,-0.1]):
@@ -512,7 +540,7 @@ while running:
                         pygame.mouse.get_pos()[1] > screensize[1]*0.37 and pygame.mouse.get_pos()[1] < screensize[1]*0.5 and \
                         pygame.mouse.get_pressed()[0]:
                         ingamevars["cellphonenow"] = cellphoneaudio
-                        audiodelay = 120
+                        audiodelay = 80
 
                     #fan
                     if pygame.mouse.get_pos()[0] > screensize[0]*scenarioX+(screensize[0]*0.83) and pygame.mouse.get_pos()[0] < screensize[0]*scenarioX+(screensize[0]*0.94) and \
@@ -613,8 +641,7 @@ while running:
                         godumpingroom.set_alpha(0)
                     if pygame.mouse.get_pos()[0] > screensize[0]*0.4 and pygame.mouse.get_pos()[0] < screensize[0]*0.49 and \
                         pygame.mouse.get_pos()[1] > screensize[1]*scenarioY+(screensize[0]*0.76) and pygame.mouse.get_pos()[1] < screensize[1]*scenarioY+(screensize[0]*0.81) and \
-                        pygame.mouse.get_pressed()[0]:
-                        if chargingtimer == 900:
+                        pygame.mouse.get_pressed()[0] and chargingtimer == 900:
                             chargingtimer = 1
                             godumpingroom.set_alpha(0)
                             ingamevars["battery"] = 109901
@@ -624,11 +651,22 @@ while running:
                         screen.fill((0,0,200),(screensize[0]*0.01,screensize[1]-screensize[1]*0.03,chargingtimer*(screensize[0]*0.00109),screensize[1]*0.02))
                     else:
                         godumpingroom.set_alpha(80)
+            #lurga ai
+            if fanbladesoff < -100 and abs(fanbladesoff) % 2400 == 0:
+                oldlurgapos = ingamevars["lurgapos"]
+                ingamevars["lurgapos"] = lurgamovement(ingamevars["lurgapos"], ingamevars["difficulty"][1])
+                if ingamevars["lurgapos"] == 20:
+                    #jumpscare
+                    print("dead")
+                elif ingamevars["lurgapos"] == 1 and oldlurgapos != ingamevars["lurgapos"]:
+                    lurgaudio = pygame.mixer.Sound(f"assets/audios/lurganear.mp3")
+                    pygame.mixer.find_channel().play(lurgaudio)
+                print("lurga try")
+            
             #deovas ai
             moveloop -= 1
             if moveloop <= 0:
                 ingamevars["deovaspos"] = deovasmovement(ingamevars["deovaspos"],ingamevars["difficulty"][0])
-                print(ingamevars["deovaspos"])
                 if ingamevars["deovaspos"] == 20:
                     if not ingamevars["backdoor"]:
                         #jumpscare
@@ -644,14 +682,13 @@ while running:
                         ingamevars["deovaspos"] = random.choice([2,12])
                 moveloop = 300
 
-
-
-
             init = False
             if section == "night5":
                 if not init:
-                    ingamevars["difficulty"] = [10,8]
+                    ingamevars["difficulty"] = [10,12]
                     init = True
+                else:
+                    pass
                     
                         
     if realframe == 2:
@@ -666,6 +703,6 @@ while running:
                 else:
                     debug = False
         if event.type == pygame.QUIT:
-            for file in glob.glob('assets/audios/tmp/*'):
+            for file in glob.glob('assets/tmp/*'):
                 os.remove(file)
             running = False
