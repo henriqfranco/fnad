@@ -9,6 +9,7 @@ import string
 import json
 import os
 import pygame_textinput
+from pygame import _sdl2 as sdl2
 
 currentres = (1280,720)
 currentfull = False
@@ -740,12 +741,13 @@ while running:
                     #jumpscare
                     print("dead")
                 elif ingamevars["lurgapos"] == 1 and oldlurgapos != ingamevars["lurgapos"]:
-                    lurgaudio = pygame.mixer.Sound(f"assets/audios/lurganear.mp3")
+                    lurgaudio = pygame.mixer.Sound(f"assets/audios/lurganear{random.randint(3)}.mp3")
                     pygame.mixer.find_channel().play(lurgaudio)
             
             #deovas ai
             moveloop -= 1
             if moveloop <= 0:
+                olddeovaspos = ingamevars["deovaspos"]
                 ingamevars["deovaspos"] = deovasmovement(ingamevars["deovaspos"],ingamevars["difficulty"][0])
                 if ingamevars["deovaspos"] == 20:
                     if not ingamevars["backdoor"]:
@@ -874,7 +876,6 @@ while running:
                             textinput1.update(events)
                     if len(inputfocus.value) != 0 and ord(inputfocus.value[-1]) == 9:
                         inputfocus.value = inputfocus.value[:-1]
-            print(temppass)
             if section == "night5":
                 if not init:
                     textinput0.value = ""
