@@ -91,7 +91,7 @@ class pgvideo:
         return pygame.image.frombuffer(img.tobytes(), img.shape[1::-1], "BGR")
 
 def deovasmovement(pos, difficulty):
-    if random.randint(0,20) < difficulty:
+    if random.randint(0,50) < difficulty:
         if pos == 0:
             newpos = 3
         elif pos == 1:
@@ -113,7 +113,7 @@ def deovasmovement(pos, difficulty):
     return newpos
 
 def lurgamovement(pos, difficulty):
-    if random.randint(0,20) < difficulty:
+    if random.randint(0,50) < difficulty:
         if pos == 0:
             newpos = 1
         elif pos == 1:
@@ -223,6 +223,10 @@ faintimage = pygame.image.load("assets/images/faintimage.png").convert_alpha()
 faintimage = pygame.transform.scale(faintimage, screensize)
 faintimage.set_alpha(0)
 
+computerimage = pygame.image.load("assets/images/computerimage.png").convert_alpha()
+computerimage = pygame.transform.scale(computerimage,screensize)
+computerimage.set_alpha(0)
+
 chargingtimer = 900
 
 debugfont = pygame.font.Font("assets/fonts/LUCON.TTF", int(screensize[0]*0.012))
@@ -261,6 +265,7 @@ while running:
                     else:
                         state = "game"
                         section = "night5"
+                        init = False
             if pygame.mouse.get_pos()[0] > screensize[0]*0.46 and pygame.mouse.get_pos()[0] < screensize[0]*0.46+exit.get_rect()[2] and \
                 pygame.mouse.get_pos()[1] > screensize[1]*0.6 and pygame.mouse.get_pos()[1] < screensize[1]*0.6+exit.get_rect()[3]:
                     if not pygame.mouse.get_pressed()[0]:
@@ -357,6 +362,8 @@ while running:
                             screen.blit(camdeovasin[ingamevars["cam"]],(screensize[0]*0.25,screensize[1]*cellphoneY))
                         else:
                             screen.blit(camdeovasout[ingamevars["cam"]],(screensize[0]*0.25,screensize[1]*cellphoneY))
+            if ingamevars["action"] == "computer":
+                screen.blit(computerimage,(0,0))
 
             if ingamevars["action"] == "outdumpingroom":
                 if not ingamevars["backdoor"]:
@@ -372,9 +379,11 @@ while running:
                 if ingamevars["cellphonenow"] != cellphonecams:
                     screen.blit(battery, (screensize[0]*0.558,screensize[1]*cellphoneY*3.1))
                     screen.blit(time, (screensize[0]*0.517,screensize[1]*cellphoneY*3.1))
+                    screen.blit(nightdisplay, (screensize[0]*0.4,screensize[1]*cellphoneY*3.1))
                 else:
                     screen.blit(battery, (screensize[0]*0.62,screensize[1]*cellphoneY*-0.3))
                     screen.blit(time, (screensize[0]*0.569,screensize[1]*cellphoneY*-0.3))
+                    screen.blit(nightdisplay, (screensize[0]*0.34,screensize[1]*cellphoneY*-0.3))
                     screen.blit(currentcamnumber, (screensize[0]*0.64,screensize[1]*0.685))
                 if ingamevars["cellphonenow"] == cellphoneaudio:
                     for lockaudio in range(3-ingamevars["audiosleft"]):
@@ -403,6 +412,7 @@ while running:
                     backimage1open.set_alpha(backimage1open.get_alpha()-10)
                     backimage1closed.set_alpha(backimage1closed.get_alpha()-10)
                     backimage2.set_alpha(backimage2.get_alpha()-10)
+                    computerimage.set_alpha(computerimage.get_alpha()-10)
                     grabcell.set_alpha(80)
                     if ingamevars["fan"]:
                         fansoundo.set_volume(1)
@@ -491,7 +501,6 @@ while running:
                         ingamevars["lurgapos"] = 0
                         lurgaudio = pygame.mixer.Sound(f"assets/audios/lurgscared{random.randint(0,5)}.mp3")
                         pygame.mixer.find_channel().play(lurgaudio)
-                    print(audiodelay)
 
                     #cellphone cams
                     if cellphoneY <= -0.10 and (cellphonespeed in [-0.01,-0.1]):
@@ -552,6 +561,14 @@ while running:
                             else:
                                 if fanbladesoff == 100:
                                     ingamevars["fan"] = True
+
+                    #computer
+                    if pygame.mouse.get_pos()[0] > screensize[0]*scenarioX+(screensize[0]*0.1937) and pygame.mouse.get_pos()[0] < screensize[0]*scenarioX+(screensize[0]*0.571) and\
+                        pygame.mouse.get_pos()[1] > screensize[1]*0.03 and pygame.mouse.get_pos()[1] < screensize[1]*0.406 and\
+                        ingamevars["action"] == "normal" and pygame.mouse.get_pressed()[0]:
+                            grabcell.set_alpha(0)
+                            godumpingroom.set_alpha(0)
+                            ingamevars["action"] = "computer"
 
                     # goto dumping room
                     if ingamevars["action"] == "normal" and \
@@ -651,6 +668,17 @@ while running:
                         screen.fill((0,0,200),(screensize[0]*0.01,screensize[1]-screensize[1]*0.03,chargingtimer*(screensize[0]*0.00109),screensize[1]*0.02))
                     else:
                         godumpingroom.set_alpha(80)
+
+            if ingamevars["action"] == "computer":
+                if computerimage.get_alpha() != 255:
+                    computerimage.set_alpha(computerimage.get_alpha()+10)
+                    frontimage1.set_alpha(frontimage1.get_alpha()-10)
+                else:
+                    if pygame.mouse.get_pos()[0] > screensize[0]*0.880 and pygame.mouse.get_pos()[0] < screensize[0]*0.908 and\
+                        pygame.mouse.get_pos()[1] > screensize[1]*0.115 and pygame.mouse.get_pos()[1] < screensize[1]*0.189 and\
+                        pygame.mouse.get_pressed()[0]:
+                            ingamevars["action"] = "normal"
+
             #lurga ai
             if fanbladesoff < -100 and abs(fanbladesoff) % 2400 == 0:
                 oldlurgapos = ingamevars["lurgapos"]
@@ -661,7 +689,6 @@ while running:
                 elif ingamevars["lurgapos"] == 1 and oldlurgapos != ingamevars["lurgapos"]:
                     lurgaudio = pygame.mixer.Sound(f"assets/audios/lurganear.mp3")
                     pygame.mixer.find_channel().play(lurgaudio)
-                print("lurga try")
             
             #deovas ai
             moveloop -= 1
@@ -682,13 +709,14 @@ while running:
                         ingamevars["deovaspos"] = random.choice([2,12])
                 moveloop = 300
 
-            init = False
             if section == "night5":
                 if not init:
-                    ingamevars["difficulty"] = [10,12]
+                    ingamevars["difficulty"] = [25,28]
                     init = True
                 else:
-                    pass
+                    nightdisplay = phonefont.render("Sexta-Feira", True, (0,0,0))
+                    if ingamevars["cellphonenow"] == cellphonecams:
+                        nightdisplay = pygame.transform.scale_by(nightdisplay,1.277)
                     
                         
     if realframe == 2:
