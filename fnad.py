@@ -5,6 +5,10 @@ import os
 import glob
 import datetime
 import random
+import string
+import json
+import os
+import pygame_textinput
 
 currentres = (1280,720)
 currentfull = False
@@ -16,7 +20,7 @@ while True:
     print("2 - Ativar/desativar tela cheia")
     print("3 - Jogar")
     #uinput = input("> ")
-    uinput = "3"
+    uinput = "3" #remove
     match uinput:
         case "1":
             print("Selecione resolução: ")
@@ -47,6 +51,15 @@ while True:
             break
         case _:
             print("Seleção inválida")
+
+if glob.glob("saves/save.json"):
+    with open("saves/save.json","r") as savefile:
+        save = json.load(savefile)
+else:
+    with open("saves/save.json","w"):
+        pass
+    save = {"currentnight": 1,
+            "gameseed": random.randint(99999,999999)}
 
 pygame.mixer.pre_init(44100, 16, 2, 4096)
 pygame.init()
@@ -138,7 +151,9 @@ ingamevars = {"battery": 100000,
               "cam": 0,
               "deovaspos": 2,
               "lurgapos":0,
-              "difficulty": [0,0]}
+              "difficulty": [0,0],
+              "computerstage": 0,
+              "computerdone": False}
 
 #menu assets and vars        
 menuvideo = pgvideo("assets/videos/menu.mp4",loop=True,audio=False)
@@ -163,6 +178,7 @@ heatcolor = (120,10,10)
 phonefont = pygame.font.Font(None, int(screensize[0]*0.02))
 time = phonefont.render(f"H: 0{int(ingamevars['time']*0.00024)}", True, (255,255,255))
 battery = phonefont.render(f"B: {int(ingamevars['battery'])}%", True, (255,255,255))
+nightdisplay = phonefont.render("Segunda-Feira", True, (0,0,0))
 cellphonespeed = 0
 cellphoneY = 1.05
 
@@ -191,9 +207,9 @@ fanblades_ = fanblades
 fanbladesrotation = 0
 fanbladesoff = 100
 
-frontimage1deovas = pygame.image.load("assets/images/frontimage1-deovas.png").convert_alpha()
+frontimage1deovas = pygame.image.load("assets/images/frontimage/frontimage1-deovas.png").convert_alpha()
 frontimage1deovas = pygame.transform.scale(frontimage1deovas, (screensize[0]*1.5,screensize[1]))
-frontimage1 = pygame.image.load("assets/images/frontimage1.png").convert_alpha()
+frontimage1 = pygame.image.load("assets/images/frontimage/frontimage1.png").convert_alpha()
 frontimage1 = pygame.transform.scale(frontimage1, (screensize[0]*1.5,screensize[1]))
 frontimage1.set_alpha(0)
 scenariospeed = 0
@@ -203,17 +219,17 @@ godumpingroom = pygame.image.load("assets/sprites/switch/godumpingroom.png").con
 godumpingroom = pygame.transform.scale(godumpingroom, (screensize[0]*0.065,screensize[1]*0.7))
 godumpingroom.set_alpha(80)
 
-backimage1open = pygame.image.load("assets/images/backimage1-open.png").convert_alpha()
+backimage1open = pygame.image.load("assets/images/backimage/backimage1-open.png").convert_alpha()
 backimage1open = pygame.transform.scale(backimage1open, screensize)
 backimage1open.set_alpha(0)
 
-backimage1closed = pygame.image.load("assets/images/backimage1-closed.png").convert_alpha()
+backimage1closed = pygame.image.load("assets/images/backimage/backimage1-closed.png").convert_alpha()
 backimage1closed = pygame.transform.scale(backimage1closed, screensize)
 backimage1closed.set_alpha(0)
 
-backimage2deova = pygame.image.load("assets/images/backimage2-deova.png").convert_alpha()
+backimage2deova = pygame.image.load("assets/images/backimage/backimage2-deova.png").convert_alpha()
 backimage2deova = pygame.transform.scale(backimage2deova, (screensize[0],screensize[1]*1.5))
-backimage2 = pygame.image.load("assets/images/backimage2.png").convert_alpha()
+backimage2 = pygame.image.load("assets/images/backimage/backimage2.png").convert_alpha()
 backimage2 = pygame.transform.scale(backimage2, (screensize[0],screensize[1]*1.5))
 backimage2.set_alpha(0)
 scenariospeed = 0
@@ -223,13 +239,25 @@ faintimage = pygame.image.load("assets/images/faintimage.png").convert_alpha()
 faintimage = pygame.transform.scale(faintimage, screensize)
 faintimage.set_alpha(0)
 
-computerimage = pygame.image.load("assets/images/computerimage.png").convert_alpha()
+computerimage = pygame.image.load("assets/images/computer/computerimage.png").convert_alpha()
 computerimage = pygame.transform.scale(computerimage,screensize)
 computerimage.set_alpha(0)
+computerimagebrowser = []
+
+for computerimagei in range(1,6):
+    computerimagebrowser.append(pygame.image.load(f"assets/images/computer/computerimagebrowser{computerimagei}.png").convert_alpha())
+    computerimagebrowser[-1] = pygame.transform.scale(computerimagebrowser[-1],screensize)
+computerfont = pygame.font.Font("assets/fonts/LUCON.TTF", int(screensize[0]*0.03))
+computerbrowserstage = computerimage
+
+random.seed(save["gameseed"])
+temppass ="".join([random.choice(string.ascii_letters+"".join(list(map(str,list((range(10))))))) for char in "xxxxxxxx"])
+random.seed()
+temppassdisplay = computerfont.render(temppass, True, (0,0,0))
+textinput0 = pygame_textinput.TextInputVisualizer()
+textinput1 = pygame_textinput.TextInputVisualizer()
 
 chargingtimer = 900
-
-debugfont = pygame.font.Font("assets/fonts/LUCON.TTF", int(screensize[0]*0.012))
 
 currentcamnumber = phonefont.render(f"{ingamevars['cam']}", True, (255,255,255))
 camdelay = 0
@@ -243,6 +271,8 @@ for cam in range(5):
     camdeovasout[-1] = pygame.transform.scale(camdeovasout[-1], (screensize[0]*0.66,screensize[1]*1.15))
 
 moveloop = 300
+
+debugfont = pygame.font.Font("assets/fonts/LUCON.TTF", int(screensize[0]*0.012))
 
 #start
 running = True
@@ -264,7 +294,7 @@ while running:
                         play = vhsfont.render(f"JOGAR", True, (0,0,255))
                     else:
                         state = "game"
-                        section = "night5"
+                        section = f"night{save['currentnight']}"
                         init = False
             if pygame.mouse.get_pos()[0] > screensize[0]*0.46 and pygame.mouse.get_pos()[0] < screensize[0]*0.46+exit.get_rect()[2] and \
                 pygame.mouse.get_pos()[1] > screensize[1]*0.6 and pygame.mouse.get_pos()[1] < screensize[1]*0.6+exit.get_rect()[3]:
@@ -362,8 +392,23 @@ while running:
                             screen.blit(camdeovasin[ingamevars["cam"]],(screensize[0]*0.25,screensize[1]*cellphoneY))
                         else:
                             screen.blit(camdeovasout[ingamevars["cam"]],(screensize[0]*0.25,screensize[1]*cellphoneY))
-            if ingamevars["action"] == "computer":
+            if ingamevars["action"] == "computerdesktop":
                 screen.blit(computerimage,(0,0))
+            if ingamevars["action"] == "computerbrowser":
+                if ingamevars["computerstage"] == 0:
+                    screen.blit(computerimagebrowser[int(section[-1])-1],(0,0))
+                else:
+                    screen.blit(computerbrowserstage,(0,0))
+                if section == "night2" and ingamevars["computerstage"] == 1:
+                    screen.blit(temppassdisplay,(screensize[0]*0.435,screensize[1]*0.5))
+                if section == "night3":
+                    screen.blit(textinput0.surface,(screensize[0]*0.357,screensize[1]*0.532))
+                if section == "night4":
+                    screen.blit(textinput0.surface,(screensize[0]*0.410,screensize[1]*0.490))
+                    screen.blit(textinput1.surface,(screensize[0]*0.410,screensize[1]*0.556))
+                if section == "night5" and not ingamevars["computerdone"]:
+                    screen.blit(textinput0.surface,(screensize[0]*0.357,screensize[1]*0.532))
+                    screen.blit(textinput1.surface,(screensize[0]*0.426,screensize[1]*0.716))
 
             if ingamevars["action"] == "outdumpingroom":
                 if not ingamevars["backdoor"]:
@@ -398,7 +443,7 @@ while running:
             if grabcell.get_alpha() != 0:
                 screen.blit(grabcell, (screensize[0]*0.25,screensize[1]*0.9))
             screen.blit(heat,(screensize[0]*0.02,screensize[1]*0.02))
-            screen.fill((0,0,0),(screensize[0]*0.021,screensize[1]*0.071,heat.get_width()*1,int(screensize[0]*0.015)))
+            screen.fill((50,50,50),(screensize[0]*0.021,screensize[1]*0.071,heat.get_width()*1,int(screensize[0]*0.015)))
             screen.fill(heatcolor,(screensize[0]*0.02,screensize[1]*0.07,ingamevars["heat"]*heat.get_width()*0.00082,int(screensize[0]*0.014)))
             if debug:
                 info = debugfont.render(f"fps: {round(clock.get_fps(),1)} frametime(raw):{clock.get_time()}({clock.get_rawtime()}) time: {ingamevars['time']}/29635 battery:{ingamevars['battery']} heat:{ingamevars['heat']} deovaspos: {ingamevars['deovaspos']} lurgapos: {ingamevars['lurgapos']}", False, (126,126,126))
@@ -568,7 +613,7 @@ while running:
                         ingamevars["action"] == "normal" and pygame.mouse.get_pressed()[0]:
                             grabcell.set_alpha(0)
                             godumpingroom.set_alpha(0)
-                            ingamevars["action"] = "computer"
+                            ingamevars["action"] = "computerdesktop"
 
                     # goto dumping room
                     if ingamevars["action"] == "normal" and \
@@ -669,7 +714,7 @@ while running:
                     else:
                         godumpingroom.set_alpha(80)
 
-            if ingamevars["action"] == "computer":
+            if ingamevars["action"] == "computerdesktop":
                 if computerimage.get_alpha() != 255:
                     computerimage.set_alpha(computerimage.get_alpha()+10)
                     frontimage1.set_alpha(frontimage1.get_alpha()-10)
@@ -678,7 +723,15 @@ while running:
                         pygame.mouse.get_pos()[1] > screensize[1]*0.115 and pygame.mouse.get_pos()[1] < screensize[1]*0.189 and\
                         pygame.mouse.get_pressed()[0]:
                             ingamevars["action"] = "normal"
-
+                    if pygame.mouse.get_pos()[0] > screensize[0]*0.095 and pygame.mouse.get_pos()[0] < screensize[0]*0.155 and\
+                        pygame.mouse.get_pos()[1] > screensize[1]*0.115 and pygame.mouse.get_pos()[1] < screensize[1]*0.189 and\
+                        pygame.mouse.get_pressed()[0]:
+                            ingamevars["action"] = "computerbrowser"
+            if ingamevars["action"] == "computerbrowser":
+                if pygame.mouse.get_pos()[0] > screensize[0]*0.083 and pygame.mouse.get_pos()[0] < screensize[0]*0.166 and\
+                    pygame.mouse.get_pos()[1] > screensize[1]*0.785 and pygame.mouse.get_pos()[1] < screensize[1]*0.832 and\
+                    pygame.mouse.get_pressed()[0]:
+                        ingamevars["action"] = "computerdesktop"
             #lurga ai
             if fanbladesoff < -100 and abs(fanbladesoff) % 2400 == 0:
                 oldlurgapos = ingamevars["lurgapos"]
@@ -708,29 +761,171 @@ while running:
                     else:
                         ingamevars["deovaspos"] = random.choice([2,12])
                 moveloop = 300
+            #noite 1 vc tenta logar
+            #noite 2 vc clica pra recuperar a senha
+            #noite 3 vc pega a senha no email
+            #noite 4 vc redefine a senha
+            #noite 5 vc coloca o captcha pra confirmar
+            if section == "night1":
+                if not init:
+                    textinput0.value = ""
+                    textinput1.value = ""
+                    ingamevars["difficulty"] = [9,12]
+                    ingamevars["difficulty"] = [0,0] #remove
+                    init = True
+                else:
+                    nightdisplay = phonefont.render("Segunda-Feira", True, (0,0,0))
+                    if ingamevars["cellphonenow"] == cellphonecams:
+                        nightdisplay = pygame.transform.scale_by(nightdisplay,1.277)
+                    if pygame.mouse.get_pos()[0] > screensize[0]*0.451 and pygame.mouse.get_pos()[0] < screensize[0]*0.540 and\
+                        pygame.mouse.get_pos()[1] > screensize[1]*0.590 and pygame.mouse.get_pos()[1] < screensize[1]*0.642 and\
+                        pygame.mouse.get_pressed()[0] and ingamevars["computerstage"] == 0:
+                            ingamevars["computerstage"] = 1
+                            computerbrowserstage = pygame.image.load(f"assets/images/computer/nightstages/{section[-1]}-{ingamevars['computerstage']}.png").convert_alpha()
+                            computerbrowserstage = pygame.transform.scale(computerbrowserstage,screensize)
+                    if pygame.mouse.get_pos()[0] > screensize[0]*0.447 and pygame.mouse.get_pos()[0] < screensize[0]*0.550 and\
+                        pygame.mouse.get_pos()[1] > screensize[1]*0.658 and pygame.mouse.get_pos()[1] < screensize[1]*0.730 and\
+                        pygame.mouse.get_pressed()[0] and ingamevars["computerstage"] == 1:
+                            ingamevars["computerstage"] = 2
+                            computerbrowserstage = pygame.image.load(f"assets/images/computer/nightstages/{section[-1]}-{ingamevars['computerstage']}.png").convert_alpha()
+                            computerbrowserstage = pygame.transform.scale(computerbrowserstage,screensize)
+                            ingamevars["computerdone"] = True
 
+            if section == "night2":
+                if not init:
+                    textinput0.value = ""
+                    textinput1.value = ""
+                    ingamevars["difficulty"] = [13,16]
+                    ingamevars["difficulty"] = [0,0] #remove
+                    init = True
+                else:
+                    nightdisplay = phonefont.render("Terça-Feira", True, (0,0,0))
+                    if ingamevars["cellphonenow"] == cellphonecams:
+                        nightdisplay = pygame.transform.scale_by(nightdisplay,1.277)
+                    if pygame.mouse.get_pos()[0] > screensize[0]*0.140 and pygame.mouse.get_pos()[0] < screensize[0]*0.792 and\
+                        pygame.mouse.get_pos()[1] > screensize[1]*0.329 and pygame.mouse.get_pos()[1] < screensize[1]*0.376 and\
+                        pygame.mouse.get_pressed()[0] and ingamevars["computerstage"] == 0:
+                            ingamevars["computerstage"] = 1
+                            computerbrowserstage = pygame.image.load(f"assets/images/computer/nightstages/{section[-1]}-{ingamevars['computerstage']}.png").convert_alpha()
+                            computerbrowserstage = pygame.transform.scale(computerbrowserstage,screensize)
+                            ingamevars["computerdone"] = True
+
+            if section == "night3":
+                if not init:
+                    textinput0.value = ""
+                    textinput1.value = ""
+                    ingamevars["difficulty"] = [17,20]
+                    ingamevars["difficulty"] = [0,0] #remove
+                    init = True
+                else:
+                    nightdisplay = phonefont.render("Quarta-Feira", True, (0,0,0))
+                    if ingamevars["cellphonenow"] == cellphonecams:
+                        nightdisplay = pygame.transform.scale_by(nightdisplay,1.277)
+                    if ingamevars["computerstage"] in [0,-1]:
+                        textinput0.update(events)
+                        if pygame.mouse.get_pos()[0] > screensize[0]*0.451 and pygame.mouse.get_pos()[0] < screensize[0]*0.540 and\
+                            pygame.mouse.get_pos()[1] > screensize[1]*0.590 and pygame.mouse.get_pos()[1] < screensize[1]*0.642 and\
+                            pygame.mouse.get_pressed()[0]:
+                                if textinput0.value == temppass:
+                                    ingamevars["computerstage"] = 1
+                                    computerbrowserstage = pygame.image.load(f"assets/images/computer/nightstages/{section[-1]}-{ingamevars['computerstage']}.png").convert_alpha()
+                                    computerbrowserstage = pygame.transform.scale(computerbrowserstage,screensize)
+                                    ingamevars["computerdone"] = True
+                                else:
+                                    ingamevars["computerstage"] = -1
+                                    computerbrowserstage = pygame.image.load(f"assets/images/computer/nightstages/{section[-1]}-{ingamevars['computerstage']}.png").convert_alpha()
+                                    computerbrowserstage = pygame.transform.scale(computerbrowserstage,screensize)
+                    if ingamevars["computerdone"]:
+                        textinput0.value = "********"
+            if section == "night4":
+                if not init:
+                    textinput0.value = ""
+                    textinput1.value = ""
+                    inputfocus = textinput0
+                    ingamevars["difficulty"] = [21,24]
+                    ingamevars["difficulty"] = [0,0] #remove
+                    init = True
+                else:
+                    nightdisplay = phonefont.render("Quinta-Feira", True, (0,0,0))
+                    if ingamevars["cellphonenow"] == cellphonecams:
+                        nightdisplay = pygame.transform.scale_by(nightdisplay,1.277)
+                    if pygame.mouse.get_pos()[0] > screensize[0]*0.137 and pygame.mouse.get_pos()[0] < screensize[0]*0.242 and\
+                        pygame.mouse.get_pos()[1] > screensize[1]*0.431 and pygame.mouse.get_pos()[1] < screensize[1]*0.452 and\
+                        pygame.mouse.get_pressed()[0] and ingamevars["computerstage"] == 0:
+                            ingamevars["computerstage"] = 1
+                            computerbrowserstage = pygame.image.load(f"assets/images/computer/nightstages/{section[-1]}-{ingamevars['computerstage']}.png").convert_alpha()
+                            computerbrowserstage = pygame.transform.scale(computerbrowserstage,screensize)
+                    if pygame.mouse.get_pos()[0] > screensize[0]*0.477 and pygame.mouse.get_pos()[0] < screensize[0]*0.576 and\
+                        pygame.mouse.get_pos()[1] > screensize[1]*0.648 and pygame.mouse.get_pos()[1] < screensize[1]*0.710 and\
+                        pygame.mouse.get_pressed()[0] and ingamevars["computerstage"] in [1,-1]:
+                            if textinput0.value == temppass and textinput1.value == "Pesca21797200769AB_O1":
+                                ingamevars["computerstage"] = 2
+                                computerbrowserstage = pygame.image.load(f"assets/images/computer/nightstages/{section[-1]}-{ingamevars['computerstage']}.png").convert_alpha()
+                                computerbrowserstage = pygame.transform.scale(computerbrowserstage,screensize)
+                                ingamevars["computerdone"] = True
+                            else:
+                                ingamevars["computerstage"] = -1
+                                computerbrowserstage = pygame.image.load(f"assets/images/computer/nightstages/{section[-1]}-{ingamevars['computerstage']}.png").convert_alpha()
+                                computerbrowserstage = pygame.transform.scale(computerbrowserstage,screensize)
+                    if ingamevars["computerstage"] in [1,-1]:
+                        if inputfocus == textinput0:
+                            textinput0.update(events)
+                        else:
+                            textinput1.update(events)
+                    if len(inputfocus.value) != 0 and ord(inputfocus.value[-1]) == 9:
+                        inputfocus.value = inputfocus.value[:-1]
+            print(temppass)
             if section == "night5":
                 if not init:
+                    textinput0.value = ""
+                    textinput1.value = ""
+                    inputfocus = textinput0
                     ingamevars["difficulty"] = [25,28]
+                    ingamevars["difficulty"] = [0,0] #remove
                     init = True
                 else:
                     nightdisplay = phonefont.render("Sexta-Feira", True, (0,0,0))
                     if ingamevars["cellphonenow"] == cellphonecams:
                         nightdisplay = pygame.transform.scale_by(nightdisplay,1.277)
-                    
-                        
+                    if pygame.mouse.get_pos()[0] > screensize[0]*0.451 and pygame.mouse.get_pos()[0] < screensize[0]*0.540 and\
+                        pygame.mouse.get_pos()[1] > screensize[1]*0.769 and pygame.mouse.get_pos()[1] < screensize[1]*0.821 and\
+                        pygame.mouse.get_pressed()[0] and ingamevars["computerstage"] in [0,-1]:
+                            if textinput0.value == "Pesca21797200769AB_O1" and textinput1.value.lower().replace(" ", "") == "fish,ball,cat":
+                                ingamevars["computerstage"] = 1
+                                computerbrowserstage = pygame.image.load(f"assets/images/computer/nightstages/{section[-1]}-{ingamevars['computerstage']}.png").convert_alpha()
+                                computerbrowserstage = pygame.transform.scale(computerbrowserstage,screensize)
+                                ingamevars["computerdone"] = True
+                            else:
+                                ingamevars["computerstage"] = -1
+                                computerbrowserstage = pygame.image.load(f"assets/images/computer/nightstages/{section[-1]}-{ingamevars['computerstage']}.png").convert_alpha()
+                                computerbrowserstage = pygame.transform.scale(computerbrowserstage,screensize)
+
+                    if ingamevars["computerstage"] in [0,-1]:
+                        if inputfocus == textinput0:
+                            textinput0.update(events)
+                        else:
+                            textinput1.update(events)
+                    if len(inputfocus.value) != 0 and ord(inputfocus.value[-1]) == 9:
+                        inputfocus.value = inputfocus.value[:-1]
+                               
     if realframe == 2:
         realframe = 0
     pygame.display.flip()
     clock.tick(fps)
-    for event in pygame.event.get():
+    events = pygame.event.get()
+    for event in events:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_d:
-                if not debug:
-                    debug = True
+                debug = not debug
+            elif event.key == pygame.K_TAB and section in ["night4","night5"]:
+                if inputfocus == textinput0:
+                    inputfocus = textinput1
                 else:
-                    debug = False
+                    inputfocus = textinput0
+
         if event.type == pygame.QUIT:
             for file in glob.glob('assets/tmp/*'):
                 os.remove(file)
+            with open("saves/save.json", 'w') as savefile:
+                json.dump(save, savefile)
             running = False
