@@ -902,7 +902,7 @@ while running:
                 if not init:
                     textinput0.value = ""
                     textinput1.value = ""
-                    ingamevars["difficulty"] = [50,16]
+                    ingamevars["difficulty"] = [13,16]
                     init = True
                 else:
                     nightdisplay = phonefont.render("Terça-Feira", True, (0,0,0))
