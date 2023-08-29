@@ -14,6 +14,8 @@ import time
 currentres = (1280,720)
 currentfull = False
 while True:
+    time.sleep(0.1)
+    os.system("cls")
     print("---Five Nights At Deovas': O Dopaganger---\n")
     print(f"Resolução atual: {currentres}")
     print(f"Tela Cheia: {currentfull}")
@@ -23,7 +25,7 @@ while True:
     uinput = input("> ")
     match uinput:
         case "1":
-            print("Selecione resolução: ")
+            print("\nSelecione resolução: ")
             print("1 - (1280, 720)")
             print("2 - (1920, 1080)")
             print("3 - (2560, 1440)")
@@ -179,7 +181,7 @@ heatturn = 0
 heatcolor = (120,10,10)
 
 phonefont = pygame.font.Font(None, int(screensize[0]*0.02))
-gametime = phonefont.render(f"H: 0{int(ingamevars['time']*0.00024)}", True, (255,255,255))
+gametime = phonefont.render(f"H: 0{int(ingamevars['time']*0.0002362)}", True, (255,255,255))
 battery = phonefont.render(f"B: {int(ingamevars['battery'])}%", True, (255,255,255))
 nightdisplay = phonefont.render("Segunda-Feira", True, (0,0,0))
 cellphonespeed = 0
@@ -324,6 +326,11 @@ while running:
                         jumpscarelurgavideo = pgvideo("assets/videos/jumpscarelurga.mp4",loop=False,audio=False)
                         jumpscaredeovasvideo = pgvideo("assets/videos/jumpscaredeovas.mp4",loop=False,audio=False)
                         goodmorning = pgvideo("assets/videos/goodmorning.mp4",loop=False,audio=True)
+                        heat.set_alpha(255)
+                        cellphoneY = 1.05
+                        scenarioX = 0
+                        scenarioY = -0.5
+                        scenariospeed = 0
             if pygame.mouse.get_pos()[0] > screensize[0]*0.46 and pygame.mouse.get_pos()[0] < screensize[0]*0.46+exit.get_rect()[2] and \
                 pygame.mouse.get_pos()[1] > screensize[1]*0.6 and pygame.mouse.get_pos()[1] < screensize[1]*0.6+exit.get_rect()[3]:
                     if not pygame.mouse.get_pressed()[0]:
@@ -360,17 +367,22 @@ while running:
             #time
             ingamevars["time"]+=1
             if ingamevars["time"] >= 29635:
-                if ingamevars["computerdone"]:
+                if ingamevars["computerdone"] and not jumpscared:
                     if ingamevars["time"] == 29635:
                         save["currentnight"] += 1
-                        pygame.mixer_music.set_volume(0.0)
-                        pygame.mixer.stop()
-                    if not goodmorning.ended:
                         ingamevars["action"] = None
                         godumpingroom.set_alpha(0)
                         grabcell.set_alpha(0)
+                        heat.set_alpha(0)
+                        ingamevars["heat"] = 0
+                        faintimage.set_alpha(0)
+                        pygame.mixer_music.set_volume(0.0)
+                        pygame.mixer.stop()
+                        chargingtimer = 900
+                    if not goodmorning.ended:
                         screen.blit(pygame.transform.scale(goodmorning.frame(),screensize),(0,0))
                     else:
+                        pygame.mixer_music.stop()
                         state = "menu"
                         section = "main"
                 else:
@@ -438,7 +450,7 @@ while running:
                 fanbladesrotation += 100-fanbladesoff
             
             if ingamevars["action"] in ["normal","cellphone"]:
-                if ingamevars["deovaspos"] != 12 or ingamevars["cellphonenow"] != cellphoneflash:
+                if ingamevars["deovaspos"] not in [20,12] or ingamevars["cellphonenow"] != cellphoneflash:
                     screen.blit(frontimage1,(screensize[0]*scenarioX,0))
                 else:
                     if not deovasdiscovered:
@@ -495,8 +507,6 @@ while running:
                 if ingamevars["cellphonenow"] == cellphoneaudio:
                     for lockaudio in range(3-ingamevars["audiosleft"]):
                         screen.blit(lock,(screensize[0]*0.394,screensize[1]*cellphoneY*5.8+(1.3*lockaudio*lock.get_height())))
-                # if ingamevars["cellphonenow"] == cellphoneflash:
-                #     pass
 
             if faintimage.get_alpha() > 0:
                 screen.blit(faintimage,(0,0))
@@ -505,8 +515,9 @@ while running:
             if grabcell.get_alpha() != 0:
                 screen.blit(grabcell, (screensize[0]*0.25,screensize[1]*0.9))
             screen.blit(heat,(screensize[0]*0.02,screensize[1]*0.02))
-            screen.fill((50,50,50),(screensize[0]*0.021,screensize[1]*0.071,heat.get_width()*1,int(screensize[0]*0.015)))
-            screen.fill(heatcolor,(screensize[0]*0.02,screensize[1]*0.07,ingamevars["heat"]*heat.get_width()*0.00082,int(screensize[0]*0.014)))
+            if ingamevars["action"] != None:
+                screen.fill((50,50,50),(screensize[0]*0.021,screensize[1]*0.071,heat.get_width()*1,int(screensize[0]*0.015)))
+                screen.fill(heatcolor,(screensize[0]*0.02,screensize[1]*0.07,ingamevars["heat"]*heat.get_width()*0.00082,int(screensize[0]*0.014)))
             if debug:
                 info = debugfont.render(f"fps: {round(clock.get_fps(),1)} frametime(raw):{clock.get_time()}({clock.get_rawtime()}) time: {ingamevars['time']}/29635 battery:{ingamevars['battery']} heat:{ingamevars['heat']} deovaspos: {ingamevars['deovaspos']} lurgapos: {ingamevars['lurgapos']}", False, (126,126,126))
                 screen.blit(info, (0,0))
@@ -585,7 +596,7 @@ while running:
                         battery = pygame.transform.scale_by(battery,1.277)
 
                     #cellphone time
-                    gametime = phonefont.render(f"H: 0{int(ingamevars['time']*0.00024)}", True, (0,0,0))
+                    gametime = phonefont.render(f"H: 0{int(ingamevars['time']*0.0002363)}", True, (0,0,0))
                     if ingamevars["cellphonenow"] == cellphonecams:
                         gametime = pygame.transform.scale_by(gametime,1.277)
 
@@ -634,7 +645,6 @@ while running:
                                 ingamevars["cam"] > 0:
                                     ingamevars["cam"] -=1
                                     camdelay = 30
-
                     #cellphone home
                     if ingamevars["action"] == "cellphone" and ingamevars["cellphonenow"] not in [cellphonehome,cellphonecams] and \
                         pygame.mouse.get_pos()[0] > screensize[0]*0.47 and pygame.mouse.get_pos()[0] < screensize[0]*0.53 and\
