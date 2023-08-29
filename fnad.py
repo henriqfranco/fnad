@@ -9,6 +9,7 @@ import string
 import json
 import os
 import pygame_textinput
+import time
 
 currentres = (1280,720)
 currentfull = False
@@ -86,14 +87,14 @@ class pgvideo:
         self.video.set(cv2.CAP_PROP_FOURCC,cv2.VideoWriter_fourcc(*'X264'))
         self.framecount = self.video.get(cv2.CAP_PROP_FRAME_COUNT)
         self.baseres = (self.video.get(cv2.CAP_PROP_FRAME_WIDTH),self.video.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        if self.audio:
-            VideoFileClip(self.file).audio.write_audiofile(f"assets/tmp/{self.file.split('/')[-1].split('.')[0]}.mp3")
+        if self.audio and not glob.glob(f"tmp.{self.file.split('/')[-1].split('.')[0]}.mp3"):
+            VideoFileClip(self.file).audio.write_audiofile(f"tmp.{self.file.split('/')[-1].split('.')[0]}.mp3")
 
     def frame(self):
         success, img = self.video.read()
         self.currentframe = self.video.get(cv2.CAP_PROP_POS_FRAMES)
         if self.currentframe == 1.0 and self.audio:
-            videoaudio = pygame.mixer.Sound(f"assets/tmp/{self.file.split('/')[-1].split('.')[0]}.mp3")
+            videoaudio = pygame.mixer.Sound(f"tmp.{self.file.split('/')[-1].split('.')[0]}.mp3")
             pygame.mixer.find_channel().play(videoaudio)
 
         if self.currentframe == self.framecount:
@@ -140,21 +141,23 @@ debug = False
 realframe = 1
 state = "menu" # game, menu
 section = "main" # menu = opening, main, settings / game = first, loading, night1, night2, night3, night4, night5
-ingamevars = {"battery": 100000,
-              "action": "normal",
-              "cellphonenow": "",
-              "audiosleft": 3,
-              "backdoor": False,
-              "fan": False,
-              "heat": 0,
-              "time": 0,
-              "cam": 0,
-              "deovaspos": 2,
-              "lurgapos":0,
-              "difficulty": [0,0],
-              "computerstage": 0,
-              "computerdone": False}
-
+def resetigv(cellphone):
+    global ingamevars
+    ingamevars = {"battery": 100000,
+                "action": "normal",
+                "cellphonenow": cellphone,
+                "audiosleft": 3,
+                "backdoor": False,
+                "fan": False,
+                "heat": 0,
+                "time": 0,
+                "cam": 2,
+                "deovaspos": 2,
+                "lurgapos":0,
+                "difficulty": [0,0],
+                "computerstage": 0,
+                "computerdone": False}
+resetigv("")
 #menu assets and vars        
 menuvideo = pgvideo("assets/videos/menu.mp4",loop=True,audio=False)
 testvideo = pgvideo("assets/videos/test.mp4",loop=True,audio=True)
@@ -176,7 +179,7 @@ heatturn = 0
 heatcolor = (120,10,10)
 
 phonefont = pygame.font.Font(None, int(screensize[0]*0.02))
-time = phonefont.render(f"H: 0{int(ingamevars['time']*0.00024)}", True, (255,255,255))
+gametime = phonefont.render(f"H: 0{int(ingamevars['time']*0.00024)}", True, (255,255,255))
 battery = phonefont.render(f"B: {int(ingamevars['battery'])}%", True, (255,255,255))
 nightdisplay = phonefont.render("Segunda-Feira", True, (0,0,0))
 cellphonespeed = 0
@@ -194,7 +197,6 @@ cellphonebattery = pygame.image.load("assets/sprites/cellphone/cellphone-battery
 cellphonebattery = pygame.transform.scale(cellphonebattery, (screensize[0]*0.5,screensize[1]*0.9))
 cellphonehome = pygame.image.load("assets/sprites/cellphone/cellphone-home.png").convert_alpha()
 cellphonehome = pygame.transform.scale(cellphonehome, (screensize[0]*0.5,screensize[1]*0.9))
-ingamevars["cellphonenow"] = cellphonehome
 audiodelay = 1
 
 fan = pygame.image.load("assets/sprites/fan/fan.png").convert_alpha()
@@ -215,6 +217,8 @@ frontimage1 = pygame.transform.scale(frontimage1, (screensize[0]*1.5,screensize[
 frontimage1.set_alpha(0)
 scenariospeed = 0
 scenarioX = 0
+deovasdiscovered = False
+seedeovas = pygame.mixer.Sound("assets/audios/seedeovas/seedeovas.mp3")
 
 godumpingroom = pygame.image.load("assets/sprites/switch/godumpingroom.png").convert_alpha()
 godumpingroom = pygame.transform.scale(godumpingroom, (screensize[0]*0.065,screensize[1]*0.7))
@@ -242,6 +246,7 @@ scenarioY = -0.5
 faintimage = pygame.image.load("assets/images/faintimage.png").convert_alpha()
 faintimage = pygame.transform.scale(faintimage, screensize)
 faintimage.set_alpha(0)
+faintkill = 0
 
 computerimage = pygame.image.load("assets/images/computer/computerimage.png").convert_alpha()
 computerimage = pygame.transform.scale(computerimage,screensize)
@@ -279,6 +284,13 @@ moveloop = 300
 debugfont = pygame.font.Font("assets/fonts/LUCON.TTF", int(screensize[0]*0.012))
 
 pygame.mixer_music.load(f"assets/audios/ambience/ambience{random.randint(0,8)}.mp3")
+jumpscarelurgavideo = pgvideo("assets/videos/jumpscarelurga.mp4",loop=False,audio=False)
+jumpscarelurgaudio = pygame.mixer.Sound("assets/audios/jumpscare/jumpscarelurga.mp3")
+jumpscaredeovasvideo = pgvideo("assets/videos/jumpscaredeovas.mp4",loop=False,audio=False)
+jumpscaredeovasaudio = jumpscarelurgaudio
+jumpscared = False
+
+goodmorning = pgvideo("assets/videos/goodmorning.mp4",loop=False,audio=True)
 
 #start
 running = True
@@ -293,7 +305,10 @@ while running:
             title = vhsfontbig.render(f"FIVE NIGHTS AT DEOVAS'", True, (255,255,255))
             play = vhsfont.render(f"JOGAR", True, (255,255,255))
             exit = vhsfont.render(f"SAIR", True, (255,255,255))
-
+            if not pygame.mixer_music.get_busy():
+                pygame.mixer_music.load("assets/audios/menusongoriginal.wav")
+                pygame.mixer_music.play()
+                pygame.mixer_music.set_volume(0.5)
             if pygame.mouse.get_pos()[0] > screensize[0]*0.45 and pygame.mouse.get_pos()[0] < screensize[0]*0.45+play.get_rect()[2] and \
                 pygame.mouse.get_pos()[1] > screensize[1]*0.4 and pygame.mouse.get_pos()[1] < screensize[1]*0.4+play.get_rect()[3]:
                     if not pygame.mouse.get_pressed()[0]:
@@ -301,7 +316,14 @@ while running:
                     else:
                         state = "game"
                         section = f"night{save['currentnight']}"
+                        pygame.mixer_music.stop()
                         init = False
+                        resetigv(cellphonehome)
+                        fanontimer = 0
+                        jumpscared = False
+                        jumpscarelurgavideo = pgvideo("assets/videos/jumpscarelurga.mp4",loop=False,audio=False)
+                        jumpscaredeovasvideo = pgvideo("assets/videos/jumpscaredeovas.mp4",loop=False,audio=False)
+                        goodmorning = pgvideo("assets/videos/goodmorning.mp4",loop=False,audio=True)
             if pygame.mouse.get_pos()[0] > screensize[0]*0.46 and pygame.mouse.get_pos()[0] < screensize[0]*0.46+exit.get_rect()[2] and \
                 pygame.mouse.get_pos()[1] > screensize[1]*0.6 and pygame.mouse.get_pos()[1] < screensize[1]*0.6+exit.get_rect()[3]:
                     if not pygame.mouse.get_pressed()[0]:
@@ -337,6 +359,25 @@ while running:
                 pygame.mixer_music.set_volume(0.05)
             #time
             ingamevars["time"]+=1
+            if ingamevars["time"] >= 29635:
+                if ingamevars["computerdone"]:
+                    if ingamevars["time"] == 29635:
+                        save["currentnight"] += 1
+                        pygame.mixer_music.set_volume(0.0)
+                        pygame.mixer.stop()
+                    if not goodmorning.ended:
+                        ingamevars["action"] = None
+                        godumpingroom.set_alpha(0)
+                        grabcell.set_alpha(0)
+                        screen.blit(pygame.transform.scale(goodmorning.frame(),screensize),(0,0))
+                    else:
+                        state = "menu"
+                        section = "main"
+                else:
+                    pygame.mixer_music.set_volume(0.0)
+                    pygame.mixer.stop()
+                    state = "menu"
+                    section = "main"
             #battery
             if ingamevars["cellphonenow"] in [cellphonehome,cellphoneaudio]:
                 ingamevars['battery']-=11
@@ -369,15 +410,21 @@ while running:
                 else:
                     faintimage.set_alpha(faintimage.get_alpha()-1)
             if faintimage.get_alpha() == 255:
-                #jumpscare
-                print("dead")
-
+                faintkill+=3
+            elif faintkill>=0:
+                faintkill-=2
+            if faintkill >= 540:
+                pygame.mixer_music.set_volume(0.0)
+                pygame.mixer.stop()
+                state = "menu"
+                section = "main"
             #fan
             if ingamevars["fan"]:
                 fanbladesrotation += 100
                 if fanbladesoff == 100:
                     fansoundo = pygame.mixer.Sound(f"assets/audios/fanon.mp3")
                     pygame.mixer.find_channel().play(fansoundo,-1)
+                    fansoundo.set_volume(0.5)
                 fanbladesoff -= 2
                 fanontimer += 1
             else:
@@ -394,6 +441,9 @@ while running:
                 if ingamevars["deovaspos"] != 12 or ingamevars["cellphonenow"] != cellphoneflash:
                     screen.blit(frontimage1,(screensize[0]*scenarioX,0))
                 else:
+                    if not deovasdiscovered:
+                        pygame.mixer.find_channel().play(seedeovas)
+                        deovasdiscovered = True
                     screen.blit(frontimage1deovas,(screensize[0]*scenarioX,0))
                 screen.blit(fan,(screensize[0]*scenarioX+(screensize[0]*0.8),screensize[1]*0.2))
                 screen.blit(fanblades_,(screensize[0]*scenarioX+(screensize[0]*0.888)-int(fanblades_.get_width()/2),screensize[1]*0.34-int(fanblades_.get_height()/2)))
@@ -435,11 +485,11 @@ while running:
             if ingamevars["action"] == "cellphone" and ingamevars["battery"] > 0:
                 if ingamevars["cellphonenow"] != cellphonecams:
                     screen.blit(battery, (screensize[0]*0.558,screensize[1]*cellphoneY*3.1))
-                    screen.blit(time, (screensize[0]*0.517,screensize[1]*cellphoneY*3.1))
+                    screen.blit(gametime, (screensize[0]*0.517,screensize[1]*cellphoneY*3.1))
                     screen.blit(nightdisplay, (screensize[0]*0.4,screensize[1]*cellphoneY*3.1))
                 else:
                     screen.blit(battery, (screensize[0]*0.62,screensize[1]*cellphoneY*-0.3))
-                    screen.blit(time, (screensize[0]*0.569,screensize[1]*cellphoneY*-0.3))
+                    screen.blit(gametime, (screensize[0]*0.569,screensize[1]*cellphoneY*-0.3))
                     screen.blit(nightdisplay, (screensize[0]*0.34,screensize[1]*cellphoneY*-0.3))
                     screen.blit(currentcamnumber, (screensize[0]*0.64,screensize[1]*0.685))
                 if ingamevars["cellphonenow"] == cellphoneaudio:
@@ -472,7 +522,7 @@ while running:
                     computerimage.set_alpha(computerimage.get_alpha()-10)
                     grabcell.set_alpha(80)
                     if ingamevars["fan"]:
-                        fansoundo.set_volume(1)
+                        fansoundo.set_volume(0.5)
                 else:
                     stepsound.stop()
                     fanblades_ = pygame.transform.rotate(fanblades,fanbladesrotation).convert_alpha()
@@ -535,9 +585,9 @@ while running:
                         battery = pygame.transform.scale_by(battery,1.277)
 
                     #cellphone time
-                    time = phonefont.render(f"H: 0{int(ingamevars['time']*0.00024)}", True, (0,0,0))
+                    gametime = phonefont.render(f"H: 0{int(ingamevars['time']*0.00024)}", True, (0,0,0))
                     if ingamevars["cellphonenow"] == cellphonecams:
-                        time = pygame.transform.scale_by(time,1.277)
+                        gametime = pygame.transform.scale_by(gametime,1.277)
 
                     #cellphone audio
                     if ingamevars["action"] == "cellphone" and ingamevars["cellphonenow"] == cellphoneaudio and \
@@ -655,7 +705,7 @@ while running:
                     backimage1open.set_alpha(backimage1open.get_alpha()+10)
                     grabcell.set_alpha(0)
                     if ingamevars["fan"]:
-                        fansoundo.set_volume(0.6)
+                        fansoundo.set_volume(0.3)
                 elif backimage1closed.get_alpha() != 255 and ingamevars["backdoor"]:
                     fan.set_alpha(fan.get_alpha()-10)
                     fanblades_.set_alpha(fan.get_alpha())
@@ -663,7 +713,7 @@ while running:
                     backimage1closed.set_alpha(backimage1closed.get_alpha()+10)
                     grabcell.set_alpha(0)
                     if ingamevars["fan"]:
-                        fansoundo.set_volume(0.6)
+                        fansoundo.set_volume(0.3)
                 else:
                     if pygame.mouse.get_pos()[0] < screensize[0]*0.04 and \
                         pygame.mouse.get_pos()[1] > screensize[1]*0.1 and pygame.mouse.get_pos()[1] < screensize[1]*0.8 and \
@@ -750,43 +800,80 @@ while running:
                     pygame.mouse.get_pressed()[0]:
                         ingamevars["action"] = "computerdesktop"
             #lurga ai
-            print(fanontimer)
             if fanontimer >= 1200:
-                print("aa")
-                oldlurgapos = ingamevars["lurgapos"]
-                ingamevars["lurgapos"] = lurgamovement(ingamevars["lurgapos"], ingamevars["difficulty"][1])
+                if fanontimer == 1200:
+                    oldlurgapos = ingamevars["lurgapos"]
+                    ingamevars["lurgapos"] = lurgamovement(ingamevars["lurgapos"], ingamevars["difficulty"][1])
                 if ingamevars["lurgapos"] == 20:
-                    #jumpscare
-                    print("dead")
+                    if not jumpscarelurgavideo.ended:
+                        jumpscarelurgaframe = pygame.transform.scale(jumpscarelurgavideo.frame(),screensize)
+                        jumpscarelurgaframe.set_colorkey((232,0,1))
+                        screen.blit(jumpscarelurgaframe,(0,0))
+                        if not jumpscared:
+                            pygame.mixer.find_channel().play(jumpscarelurgaudio)
+                            jumpscared = True
+                    else:
+                        time.sleep(1.2)
+                        state = "menu"
+                        section = "main"
+                        pygame.mixer.stop()
+                        pygame.mixer_music.stop()
+
                 elif ingamevars["lurgapos"] == 1 and oldlurgapos != ingamevars["lurgapos"]:
                     lurgaudio = pygame.mixer.Sound(f"assets/audios/lurganear{random.randint(0,2)}.mp3")
                     pygame.mixer.find_channel().play(lurgaudio)
-                fanontimer = 0
-            
+                    fanontimer = 0
             #deovas ai
             moveloop -= 1
             if moveloop <= 0:
-                olddeovaspos = ingamevars["deovaspos"]
-                ingamevars["deovaspos"] = deovasmovement(ingamevars["deovaspos"],ingamevars["difficulty"][0])
+                if moveloop == 0:
+                    olddeovaspos = ingamevars["deovaspos"]
+                    ingamevars["deovaspos"] = deovasmovement(ingamevars["deovaspos"],ingamevars["difficulty"][0])
+                if ingamevars["deovaspos"] != 12:
+                    deovasdiscovered = False
                 if ingamevars["deovaspos"] == 20:
                     if not ingamevars["backdoor"]:
-                        #jumpscare
-                        print("dead")
+                        if not jumpscaredeovasvideo.ended:
+                            jumpscaredeovasframe = pygame.transform.scale(jumpscaredeovasvideo.frame(),screensize)
+                            jumpscaredeovasframe.set_colorkey((232,0,1))
+                            screen.blit(jumpscaredeovasframe,(0,0))
+                            if not jumpscared:
+                                pygame.mixer.find_channel().play(jumpscaredeovasaudio)
+                                jumpscared = True
+                        else:
+                            time.sleep(1.2)
+                            state = "menu"
+                            section = "main"
+                            pygame.mixer.stop()
+                            pygame.mixer_music.stop()
                     else:
                         ingamevars["deovaspos"] = random.choice([2,11])
-
                 if ingamevars["deovaspos"] == 21:
                     if ingamevars["cellphonenow"] != cellphoneflash:
-                        #jumpscare
-                        print("dead")
+                        if not jumpscaredeovasvideo.ended:
+                            jumpscaredeovasframe = pygame.transform.scale(jumpscaredeovasvideo.frame(),screensize)
+                            jumpscaredeovasframe.set_colorkey((232,0,1))
+                            screen.blit(jumpscaredeovasframe,(0,0))
+                            if not jumpscared:
+                                pygame.mixer.find_channel().play(jumpscaredeovasaudio)
+                                jumpscared = True
+                        else:
+                            time.sleep(1.2)
+                            state = "menu"
+                            section = "main"
+                            pygame.mixer.stop()
+                            pygame.mixer_music.stop()
                     else:
                         ingamevars["deovaspos"] = random.choice([2,12])
-                moveloop = 300
+                if ingamevars["deovaspos"] not in [20,21]:
+                    moveloop = 300
             #noite 1 vc tenta logar
             #noite 2 vc clica pra recuperar a senha
             #noite 3 vc pega a senha no email
             #noite 4 vc redefine a senha
             #noite 5 vc coloca o captcha pra confirmar
+
+            #add som de deovas na porta
             if section == "night1":
                 if not init:
                     textinput0.value = ""
@@ -815,7 +902,7 @@ while running:
                 if not init:
                     textinput0.value = ""
                     textinput1.value = ""
-                    ingamevars["difficulty"] = [13,16]
+                    ingamevars["difficulty"] = [50,16]
                     init = True
                 else:
                     nightdisplay = phonefont.render("Terça-Feira", True, (0,0,0))
@@ -941,7 +1028,7 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-for file in glob.glob('assets/tmp/*'):
+for file in glob.glob('tmp.*.mp3'):
     os.remove(file)
 with open("saves/save.json", 'w') as savefile:
     json.dump(save, savefile)
