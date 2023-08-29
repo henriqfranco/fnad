@@ -9,7 +9,6 @@ import string
 import json
 import os
 import pygame_textinput
-from pygame import _sdl2 as sdl2
 
 currentres = (1280,720)
 currentfull = False
@@ -20,8 +19,7 @@ while True:
     print("1 - Alterar Resolução")
     print("2 - Ativar/desativar tela cheia")
     print("3 - Jogar")
-    #uinput = input("> ")
-    uinput = "3" #remove
+    uinput = input("> ")
     match uinput:
         case "1":
             print("Selecione resolução: ")
@@ -85,6 +83,7 @@ class pgvideo:
         self.audio = audio
         self.ended = False
         self.video = cv2.VideoCapture(self.file)
+        self.video.set(cv2.CAP_PROP_FOURCC,cv2.VideoWriter_fourcc(*'X264'))
         self.framecount = self.video.get(cv2.CAP_PROP_FRAME_COUNT)
         self.baseres = (self.video.get(cv2.CAP_PROP_FRAME_WIDTH),self.video.get(cv2.CAP_PROP_FRAME_HEIGHT))
         if self.audio:
@@ -207,6 +206,7 @@ fanblades = pygame.transform.scale(fanblades,(screensize[0]*0.107,screensize[0]*
 fanblades_ = fanblades
 fanbladesrotation = 0
 fanbladesoff = 100
+fanontimer = 0
 
 frontimage1deovas = pygame.image.load("assets/images/frontimage/frontimage1-deovas.png").convert_alpha()
 frontimage1deovas = pygame.transform.scale(frontimage1deovas, (screensize[0]*1.5,screensize[1]))
@@ -219,6 +219,9 @@ scenarioX = 0
 godumpingroom = pygame.image.load("assets/sprites/switch/godumpingroom.png").convert_alpha()
 godumpingroom = pygame.transform.scale(godumpingroom, (screensize[0]*0.065,screensize[1]*0.7))
 godumpingroom.set_alpha(80)
+stepsound = pygame.mixer.Sound("assets/audios/inoutdumping/step.mp3")
+dooropen = pygame.mixer.Sound("assets/audios/inoutdumping/dooropen.mp3")
+doorclose = pygame.mixer.Sound("assets/audios/inoutdumping/doorclose.mp3")
 
 backimage1open = pygame.image.load("assets/images/backimage/backimage1-open.png").convert_alpha()
 backimage1open = pygame.transform.scale(backimage1open, screensize)
@@ -275,6 +278,8 @@ moveloop = 300
 
 debugfont = pygame.font.Font("assets/fonts/LUCON.TTF", int(screensize[0]*0.012))
 
+pygame.mixer_music.load(f"assets/audios/ambience/ambience{random.randint(0,8)}.mp3")
+
 #start
 running = True
 while running:
@@ -302,7 +307,7 @@ while running:
                     if not pygame.mouse.get_pressed()[0]:
                         exit = vhsfont.render(f"SAIR", True, (255,0,0))
                     else:
-                        pygame.quit()
+                        running = False
 
 
             screen.blit(dtime, (screensize[0]*0.1,screensize[1]*0.766))
@@ -325,6 +330,11 @@ while running:
         screen.fill((0,0,0))
         if section not in ["first", "loading"]:
             #game globals
+            #ambience
+            if not pygame.mixer_music.get_busy():
+                pygame.mixer_music.load(f"assets/audios/ambience/ambience{random.randint(0,8)}.mp3")
+                pygame.mixer_music.play()
+                pygame.mixer_music.set_volume(0.05)
             #time
             ingamevars["time"]+=1
             #battery
@@ -369,6 +379,7 @@ while running:
                     fansoundo = pygame.mixer.Sound(f"assets/audios/fanon.mp3")
                     pygame.mixer.find_channel().play(fansoundo,-1)
                 fanbladesoff -= 2
+                fanontimer += 1
             else:
                 if fanbladesoff < 0:
                     fanbladesoff = 0
@@ -463,8 +474,8 @@ while running:
                     if ingamevars["fan"]:
                         fansoundo.set_volume(1)
                 else:
+                    stepsound.stop()
                     fanblades_ = pygame.transform.rotate(fanblades,fanbladesrotation).convert_alpha()
-
                     #scenario move
                     if scenarioX == -0.5 and scenariospeed == -0.01:
                         scenariospeed = 0
@@ -664,15 +675,18 @@ while running:
                     if pygame.mouse.get_pos()[0] > screensize[0]*0.7 and pygame.mouse.get_pressed()[0]:
                         if not ingamevars["backdoor"]:
                             ingamevars["backdoor"] = True
+                            pygame.mixer.find_channel().play(doorclose)
                             backimage1open.set_alpha(0)
                         else:
                             ingamevars["backdoor"] = False
+                            pygame.mixer.find_channel().play(dooropen)
                             backimage1open.set_alpha(0)
                             backimage1closed.set_alpha(0)
                     if not ingamevars["backdoor"] and\
                         pygame.mouse.get_pos()[0] < screensize[0]*0.7 and pygame.mouse.get_pos()[0] > screensize[0]*0.2 and\
                         pygame.mouse.get_pressed()[0]:
                         ingamevars["action"] = "indumpingroom"
+                        pygame.mixer.find_channel().play(stepsound)
                         scenarioY = -0.5
 
             #in dumping room
@@ -683,6 +697,7 @@ while running:
                     backimage1open.set_alpha(backimage1open.get_alpha()-10)
                     backimage1closed.set_alpha(backimage1closed.get_alpha()-10)
                 else:
+                    stepsound.stop()
                     if scenarioY == -0.5 and scenariospeed == -0.01:
                         scenariospeed = 0
                     if scenarioY == 0 and scenariospeed == 0.01:
@@ -701,6 +716,7 @@ while running:
                         pygame.mouse.get_pos()[1] > screensize[1]*0.1 and pygame.mouse.get_pos()[1] < screensize[1]*0.8 and \
                         godumpingroom.get_alpha() != 0 and chargingtimer == 900:
                         ingamevars["action"] = "normal"
+                        pygame.mixer.find_channel().play(stepsound)
                         godumpingroom.set_alpha(0)
                     if pygame.mouse.get_pos()[0] > screensize[0]*0.4 and pygame.mouse.get_pos()[0] < screensize[0]*0.49 and \
                         pygame.mouse.get_pos()[1] > screensize[1]*scenarioY+(screensize[0]*0.76) and pygame.mouse.get_pos()[1] < screensize[1]*scenarioY+(screensize[0]*0.81) and \
@@ -734,15 +750,18 @@ while running:
                     pygame.mouse.get_pressed()[0]:
                         ingamevars["action"] = "computerdesktop"
             #lurga ai
-            if fanbladesoff < -100 and abs(fanbladesoff) % 2400 == 0:
+            print(fanontimer)
+            if fanontimer >= 1200:
+                print("aa")
                 oldlurgapos = ingamevars["lurgapos"]
                 ingamevars["lurgapos"] = lurgamovement(ingamevars["lurgapos"], ingamevars["difficulty"][1])
                 if ingamevars["lurgapos"] == 20:
                     #jumpscare
                     print("dead")
                 elif ingamevars["lurgapos"] == 1 and oldlurgapos != ingamevars["lurgapos"]:
-                    lurgaudio = pygame.mixer.Sound(f"assets/audios/lurganear{random.randint(3)}.mp3")
+                    lurgaudio = pygame.mixer.Sound(f"assets/audios/lurganear{random.randint(0,2)}.mp3")
                     pygame.mixer.find_channel().play(lurgaudio)
+                fanontimer = 0
             
             #deovas ai
             moveloop -= 1
@@ -773,7 +792,6 @@ while running:
                     textinput0.value = ""
                     textinput1.value = ""
                     ingamevars["difficulty"] = [9,12]
-                    ingamevars["difficulty"] = [0,0] #remove
                     init = True
                 else:
                     nightdisplay = phonefont.render("Segunda-Feira", True, (0,0,0))
@@ -798,7 +816,6 @@ while running:
                     textinput0.value = ""
                     textinput1.value = ""
                     ingamevars["difficulty"] = [13,16]
-                    ingamevars["difficulty"] = [0,0] #remove
                     init = True
                 else:
                     nightdisplay = phonefont.render("Terça-Feira", True, (0,0,0))
@@ -817,7 +834,6 @@ while running:
                     textinput0.value = ""
                     textinput1.value = ""
                     ingamevars["difficulty"] = [17,20]
-                    ingamevars["difficulty"] = [0,0] #remove
                     init = True
                 else:
                     nightdisplay = phonefont.render("Quarta-Feira", True, (0,0,0))
@@ -845,7 +861,6 @@ while running:
                     textinput1.value = ""
                     inputfocus = textinput0
                     ingamevars["difficulty"] = [21,24]
-                    ingamevars["difficulty"] = [0,0] #remove
                     init = True
                 else:
                     nightdisplay = phonefont.render("Quinta-Feira", True, (0,0,0))
@@ -882,7 +897,6 @@ while running:
                     textinput1.value = ""
                     inputfocus = textinput0
                     ingamevars["difficulty"] = [25,28]
-                    ingamevars["difficulty"] = [0,0] #remove
                     init = True
                 else:
                     nightdisplay = phonefont.render("Sexta-Feira", True, (0,0,0))
@@ -925,8 +939,9 @@ while running:
                     inputfocus = textinput0
 
         if event.type == pygame.QUIT:
-            for file in glob.glob('assets/tmp/*'):
-                os.remove(file)
-            with open("saves/save.json", 'w') as savefile:
-                json.dump(save, savefile)
             running = False
+
+for file in glob.glob('assets/tmp/*'):
+    os.remove(file)
+with open("saves/save.json", 'w') as savefile:
+    json.dump(save, savefile)
