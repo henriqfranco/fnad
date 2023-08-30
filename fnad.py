@@ -86,6 +86,7 @@ class pgvideo:
         self.audio = audio
         self.ended = False
         self.video = cv2.VideoCapture(self.file)
+        self.currentframe = False
         self.video.set(cv2.CAP_PROP_FOURCC,cv2.VideoWriter_fourcc(*'X264'))
         self.framecount = self.video.get(cv2.CAP_PROP_FRAME_COUNT)
         self.baseres = (self.video.get(cv2.CAP_PROP_FRAME_WIDTH),self.video.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -293,6 +294,9 @@ jumpscaredeovasaudio = jumpscarelurgaudio
 jumpscared = False
 
 goodmorning = pgvideo("assets/videos/goodmorning.mp4",loop=False,audio=True)
+entryvideo = pgvideo("assets/videos/night1.mp4",loop=False,audio=True)
+
+occasionaldeovas = pygame.mixer.Sound("assets/audios/occasionaldeovas/gulpof87.mp3")
 
 #start
 running = True
@@ -317,7 +321,8 @@ while running:
                         play = vhsfont.render(f"JOGAR", True, (0,0,255))
                     else:
                         state = "game"
-                        section = f"night{save['currentnight']}"
+                        section = "loading"
+                        entryvideo = pgvideo(f"assets/videos/night{save['currentnight']}.mp4",loop=False,audio=True)
                         pygame.mixer_music.stop()
                         init = False
                         resetigv(cellphonehome)
@@ -331,6 +336,9 @@ while running:
                         scenarioX = 0
                         scenarioY = -0.5
                         scenariospeed = 0
+                        chargingtimer = 900
+                        faintkill = 0
+                        faintimage.set_alpha(9)
             if pygame.mouse.get_pos()[0] > screensize[0]*0.46 and pygame.mouse.get_pos()[0] < screensize[0]*0.46+exit.get_rect()[2] and \
                 pygame.mouse.get_pos()[1] > screensize[1]*0.6 and pygame.mouse.get_pos()[1] < screensize[1]*0.6+exit.get_rect()[3]:
                     if not pygame.mouse.get_pressed()[0]:
@@ -356,8 +364,17 @@ while running:
 
     #game section
     if state == "game":
-        screen.fill((0,0,0))
+        if section == "loading":
+            if not entryvideo.currentframe:
+                screen.fill((0,0,0))
+                pygame.display.flip()
+                time.sleep(1)
+            if not entryvideo.ended:
+                screen.blit(pygame.transform.scale(entryvideo.frame(), screensize),(0,0))
+            else:
+                section = f"night{save['currentnight']}"
         if section not in ["first", "loading"]:
+            screen.fill((0,0,0))
             #game globals
             #ambience
             if not pygame.mixer_music.get_busy():
@@ -378,7 +395,6 @@ while running:
                         faintimage.set_alpha(0)
                         pygame.mixer_music.set_volume(0.0)
                         pygame.mixer.stop()
-                        chargingtimer = 900
                     if not goodmorning.ended:
                         screen.blit(pygame.transform.scale(goodmorning.frame(),screensize),(0,0))
                     else:
@@ -426,10 +442,13 @@ while running:
             elif faintkill>=0:
                 faintkill-=2
             if faintkill >= 540:
-                pygame.mixer_music.set_volume(0.0)
-                pygame.mixer.stop()
-                state = "menu"
-                section = "main"
+                if not jumpscared:
+                    pygame.mixer.find_channel().play(jumpscaredeovasaudio)
+                    jumpscared = True
+                    fanontimer = 1201
+                    moveloop = -1
+                    ingamevars[random.choice(["deovaspos","lurgapos"])] = 20
+                    ingamevars["time"] = 0
             #fan
             if ingamevars["fan"]:
                 fanbladesrotation += 100
@@ -454,6 +473,7 @@ while running:
                     screen.blit(frontimage1,(screensize[0]*scenarioX,0))
                 else:
                     if not deovasdiscovered:
+                        scenarioX = -0.5
                         pygame.mixer.find_channel().play(seedeovas)
                         deovasdiscovered = True
                     screen.blit(frontimage1deovas,(screensize[0]*scenarioX,0))
@@ -483,7 +503,6 @@ while running:
                 if section == "night5" and not ingamevars["computerdone"]:
                     screen.blit(textinput0.surface,(screensize[0]*0.357,screensize[1]*0.532))
                     screen.blit(textinput1.surface,(screensize[0]*0.426,screensize[1]*0.716))
-
             if ingamevars["action"] == "outdumpingroom":
                 if not ingamevars["backdoor"]:
                     screen.blit(backimage1open,(0,0))
@@ -493,7 +512,13 @@ while running:
                 if ingamevars["deovaspos"] != 11:
                     screen.blit(backimage2,(0,screensize[1]*scenarioY))
                 else:
+                    if not deovasdiscovered:
+                        if backimage2.get_alpha() != 255 or scenarioY >= -0.20:
+                            scenarioY = 0
+                            pygame.mixer.find_channel().play(seedeovas)
+                            deovasdiscovered = True
                     screen.blit(backimage2deova,(0,screensize[1]*scenarioY))
+
             if ingamevars["action"] == "cellphone" and ingamevars["battery"] > 0:
                 if ingamevars["cellphonenow"] != cellphonecams:
                     screen.blit(battery, (screensize[0]*0.558,screensize[1]*cellphoneY*3.1))
@@ -519,7 +544,7 @@ while running:
                 screen.fill((50,50,50),(screensize[0]*0.021,screensize[1]*0.071,heat.get_width()*1,int(screensize[0]*0.015)))
                 screen.fill(heatcolor,(screensize[0]*0.02,screensize[1]*0.07,ingamevars["heat"]*heat.get_width()*0.00082,int(screensize[0]*0.014)))
             if debug:
-                info = debugfont.render(f"fps: {round(clock.get_fps(),1)} frametime(raw):{clock.get_time()}({clock.get_rawtime()}) time: {ingamevars['time']}/29635 battery:{ingamevars['battery']} heat:{ingamevars['heat']} deovaspos: {ingamevars['deovaspos']} lurgapos: {ingamevars['lurgapos']}", False, (126,126,126))
+                info = debugfont.render(f"fps: {round(clock.get_fps(),1)} frametime(raw):{clock.get_time()}({clock.get_rawtime()}) time: {ingamevars['time']}/29635 battery:{ingamevars['battery']} heat:{ingamevars['heat']} deovaspos: {ingamevars['deovaspos']} lurgapos: {ingamevars['lurgapos']}", False, (255,255,255))
                 screen.blit(info, (0,0))
             if ingamevars["action"] in ["normal", "cellphone"]:
                 if frontimage1.get_alpha() != 255:
@@ -815,66 +840,61 @@ while running:
                     oldlurgapos = ingamevars["lurgapos"]
                     ingamevars["lurgapos"] = lurgamovement(ingamevars["lurgapos"], ingamevars["difficulty"][1])
                 if ingamevars["lurgapos"] == 20:
+                    if not jumpscared:
+                        pygame.mixer.find_channel().play(jumpscarelurgaudio)
+                        jumpscared = True
+                elif ingamevars["lurgapos"] == 1 and oldlurgapos != ingamevars["lurgapos"]:
+                    lurgaudio = pygame.mixer.Sound(f"assets/audios/lurganear{random.randint(0,2)}.mp3")
+                    pygame.mixer.find_channel().play(lurgaudio)
+                    fanontimer = 0
+
+                if jumpscared and ingamevars["lurgapos"] in [20,21]:
                     if not jumpscarelurgavideo.ended:
                         jumpscarelurgaframe = pygame.transform.scale(jumpscarelurgavideo.frame(),screensize)
                         jumpscarelurgaframe.set_colorkey((232,0,1))
                         screen.blit(jumpscarelurgaframe,(0,0))
-                        if not jumpscared:
-                            pygame.mixer.find_channel().play(jumpscarelurgaudio)
-                            jumpscared = True
                     else:
                         time.sleep(1.2)
                         state = "menu"
                         section = "main"
                         pygame.mixer.stop()
                         pygame.mixer_music.stop()
-
-                elif ingamevars["lurgapos"] == 1 and oldlurgapos != ingamevars["lurgapos"]:
-                    lurgaudio = pygame.mixer.Sound(f"assets/audios/lurganear{random.randint(0,2)}.mp3")
-                    pygame.mixer.find_channel().play(lurgaudio)
-                    fanontimer = 0
             #deovas ai
             moveloop -= 1
             if moveloop <= 0:
                 if moveloop == 0:
                     olddeovaspos = ingamevars["deovaspos"]
                     ingamevars["deovaspos"] = deovasmovement(ingamevars["deovaspos"],ingamevars["difficulty"][0])
-                if ingamevars["deovaspos"] != 12:
+                    if random.randint(0,2) == 0:
+                        pygame.mixer.find_channel().play(occasionaldeovas)
+                        occasionaldeovas.set_volume(0.6)
+                if ingamevars["deovaspos"] not in [12,21]:
                     deovasdiscovered = False
                 if ingamevars["deovaspos"] == 20:
                     if not ingamevars["backdoor"]:
-                        if not jumpscaredeovasvideo.ended:
-                            jumpscaredeovasframe = pygame.transform.scale(jumpscaredeovasvideo.frame(),screensize)
-                            jumpscaredeovasframe.set_colorkey((232,0,1))
-                            screen.blit(jumpscaredeovasframe,(0,0))
-                            if not jumpscared:
-                                pygame.mixer.find_channel().play(jumpscaredeovasaudio)
-                                jumpscared = True
-                        else:
-                            time.sleep(1.2)
-                            state = "menu"
-                            section = "main"
-                            pygame.mixer.stop()
-                            pygame.mixer_music.stop()
-                    else:
+                        if not jumpscared:
+                            pygame.mixer.find_channel().play(jumpscaredeovasaudio)
+                            jumpscared = True
+                    elif not jumpscared:
                         ingamevars["deovaspos"] = random.choice([2,11])
                 if ingamevars["deovaspos"] == 21:
                     if ingamevars["cellphonenow"] != cellphoneflash:
-                        if not jumpscaredeovasvideo.ended:
-                            jumpscaredeovasframe = pygame.transform.scale(jumpscaredeovasvideo.frame(),screensize)
-                            jumpscaredeovasframe.set_colorkey((232,0,1))
-                            screen.blit(jumpscaredeovasframe,(0,0))
-                            if not jumpscared:
-                                pygame.mixer.find_channel().play(jumpscaredeovasaudio)
-                                jumpscared = True
-                        else:
-                            time.sleep(1.2)
-                            state = "menu"
-                            section = "main"
-                            pygame.mixer.stop()
-                            pygame.mixer_music.stop()
-                    else:
+                        if not jumpscared:
+                            pygame.mixer.find_channel().play(jumpscaredeovasaudio)
+                            jumpscared = True
+                    elif not jumpscared:
                         ingamevars["deovaspos"] = random.choice([2,12])
+                if jumpscared and ingamevars["deovaspos"] in [20,21]:
+                    if not jumpscaredeovasvideo.ended:
+                        jumpscaredeovasframe = pygame.transform.scale(jumpscaredeovasvideo.frame(),screensize)
+                        jumpscaredeovasframe.set_colorkey((232,0,1))
+                        screen.blit(jumpscaredeovasframe,(0,0))
+                    else:
+                        time.sleep(1.2)
+                        state = "menu"
+                        section = "main"
+                        pygame.mixer.stop()
+                        pygame.mixer_music.stop()
                 if ingamevars["deovaspos"] not in [20,21]:
                     moveloop = 300
             #noite 1 vc tenta logar
