@@ -865,9 +865,9 @@ while running:
                 if moveloop == 0:
                     olddeovaspos = ingamevars["deovaspos"]
                     ingamevars["deovaspos"] = deovasmovement(ingamevars["deovaspos"],ingamevars["difficulty"][0])
-                    if random.randint(0,2) == 0:
+                    if random.randint(0,4) == 0:
                         pygame.mixer.find_channel().play(occasionaldeovas)
-                        occasionaldeovas.set_volume(0.6)
+                        occasionaldeovas.set_volume(0.1)
                 if ingamevars["deovaspos"] not in [12,21]:
                     deovasdiscovered = False
                 if ingamevars["deovaspos"] == 20:
