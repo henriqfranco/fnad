@@ -294,6 +294,7 @@ jumpscaredeovasaudio = jumpscarelurgaudio
 jumpscared = False
 
 goodmorning = pgvideo("assets/videos/goodmorning.mp4",loop=False,audio=True)
+firstvideo = pgvideo(f"assets/videos/first.mp4",loop=False,audio=False)
 entryvideo = pgvideo("assets/videos/night1.mp4",loop=False,audio=True)
 
 occasionaldeovas = pygame.mixer.Sound("assets/audios/occasionaldeovas/gulpof87.mp3")
@@ -321,8 +322,9 @@ while running:
                         play = vhsfont.render(f"JOGAR", True, (0,0,255))
                     else:
                         state = "game"
-                        section = "loading"
+                        section = "first"
                         entryvideo = pgvideo(f"assets/videos/night{save['currentnight']}.mp4",loop=False,audio=True)
+                        firstvideo = pgvideo(f"assets/videos/first.mp4",loop=False,audio=False)
                         pygame.mixer_music.stop()
                         init = False
                         resetigv(cellphonehome)
@@ -364,6 +366,14 @@ while running:
 
     #game section
     if state == "game":
+        if section == "first":
+            if save["currentnight"] == 1:
+                if not firstvideo.ended:
+                    screen.blit(pygame.transform.scale(firstvideo.frame(), screensize),(0,0))
+                else:
+                    section = "loading"
+            else:
+                section = "loading"
         if section == "loading":
             if not entryvideo.currentframe:
                 screen.fill((0,0,0))
@@ -876,14 +886,14 @@ while running:
                             pygame.mixer.find_channel().play(jumpscaredeovasaudio)
                             jumpscared = True
                     elif not jumpscared:
-                        ingamevars["deovaspos"] = random.choice([2,11])
+                        ingamevars["deovaspos"] = random.choices([2,11],[60,30])[0]
                 if ingamevars["deovaspos"] == 21:
                     if ingamevars["cellphonenow"] != cellphoneflash:
                         if not jumpscared:
                             pygame.mixer.find_channel().play(jumpscaredeovasaudio)
                             jumpscared = True
                     elif not jumpscared:
-                        ingamevars["deovaspos"] = random.choice([2,12])
+                        ingamevars["deovaspos"] = random.choices([2,12],[70,30])[0]
                 if jumpscared and ingamevars["deovaspos"] in [20,21]:
                     if not jumpscaredeovasvideo.ended:
                         jumpscaredeovasframe = pygame.transform.scale(jumpscaredeovasvideo.frame(),screensize)
@@ -1054,7 +1064,8 @@ while running:
                     inputfocus = textinput1
                 else:
                     inputfocus = textinput0
-
+            elif event.key == pygame.K_RETURN and section == "first":
+                section = "loading"
         if event.type == pygame.QUIT:
             running = False
 
