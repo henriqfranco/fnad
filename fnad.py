@@ -170,6 +170,7 @@ dtime = vhsfont.render(f"{datetime.datetime.now().strftime('%H:%M')}", True, (25
 ddate = vhsfont.render(f"{datetime.datetime.now().strftime('%b.%d %Y')}", True, (255,255,255))
 title = vhsfontbig.render(f"FIVE NIGHTS AT DEOVAS'", True, (255,255,255))
 play = vhsfont.render(f"JOGAR", True, (255,255,255))
+currentnight = vhsfont.render(f"Segunda-Feira", True, (180,180,180))
 exit = vhsfont.render(f"SAIR", True, (255,255,255))
 
 #game assets and vars
@@ -309,9 +310,20 @@ while running:
         if section == "main":
             dtime = vhsfont.render(f"{datetime.datetime.now().strftime('%H:%M')}", True, (255,255,255))
             ddate = vhsfont.render(f"{datetime.datetime.now().strftime('%b.%d %Y')}", True, (255,255,255))
-            title = vhsfontbig.render(f"FIVE NIGHTS AT DEOVAS'", True, (255,255,255))
             play = vhsfont.render(f"JOGAR", True, (255,255,255))
             exit = vhsfont.render(f"SAIR", True, (255,255,255))
+            if save["currentnight"] == 1:
+                currentnight = vhsfont.render(f"Segunda-Feira", True, (180,180,180))
+            elif save["currentnight"] == 2:
+                currentnight = vhsfont.render(f"Terça-Feira", True, (180,180,180))
+            elif save["currentnight"] == 3:
+                currentnight = vhsfont.render(f"Quarta-Feira", True, (180,180,180))
+            elif save["currentnight"] == 4:
+                currentnight = vhsfont.render(f"Quinta-Feira", True, (180,180,180))
+            elif save["currentnight"] == 5:
+                currentnight = vhsfont.render(f"Sexta-Feira", True, (180,180,180))
+            currentnight.set_alpha(0)
+            currentnight = pygame.transform.scale_by(currentnight,0.5)
             if not pygame.mixer_music.get_busy():
                 pygame.mixer_music.load("assets/audios/menusongoriginal.wav")
                 pygame.mixer_music.play()
@@ -320,6 +332,7 @@ while running:
                 pygame.mouse.get_pos()[1] > screensize[1]*0.4 and pygame.mouse.get_pos()[1] < screensize[1]*0.4+play.get_rect()[3]:
                     if not pygame.mouse.get_pressed()[0]:
                         play = vhsfont.render(f"JOGAR", True, (0,0,255))
+                        currentnight.set_alpha(255)
                     else:
                         state = "game"
                         section = "first"
@@ -348,10 +361,11 @@ while running:
                     else:
                         running = False
 
-
             screen.blit(dtime, (screensize[0]*0.1,screensize[1]*0.766))
             screen.blit(ddate, (screensize[0]*0.1,screensize[1]*0.833))
             screen.blit(title, (screensize[0]*0.248,screensize[1]*0.1))
+            aligntext = (play.get_rect()[2]-currentnight.get_rect()[2])*0.5
+            screen.blit(currentnight, ((screensize[0]*0.45)+aligntext,(screensize[1]*0.4)+play.get_rect()[3]))
             screen.blit(play, (screensize[0]*0.45,screensize[1]*0.4))
             screen.blit(exit, (screensize[0]*0.46,screensize[1]*0.6))
             if realframe == 2: # game/video fps difference fix
@@ -368,6 +382,10 @@ while running:
     if state == "game":
         if section == "first":
             if save["currentnight"] == 1:
+                if not firstvideo.currentframe:
+                    screen.fill((0,0,0))
+                    pygame.display.flip()
+                    time.sleep(1)
                 if not firstvideo.ended:
                     screen.blit(pygame.transform.scale(firstvideo.frame(), screensize),(0,0))
                 else:
@@ -523,7 +541,7 @@ while running:
                     screen.blit(backimage2,(0,screensize[1]*scenarioY))
                 else:
                     if not deovasdiscovered:
-                        if backimage2.get_alpha() != 255 or scenarioY >= -0.20:
+                        if backimage2.get_alpha() ==200 or scenarioY >= -0.20:
                             scenarioY = 0
                             pygame.mixer.find_channel().play(seedeovas)
                             deovasdiscovered = True
@@ -825,7 +843,8 @@ while running:
                         screen.fill((0,0,200),(screensize[0]*0.01,screensize[1]-screensize[1]*0.03,chargingtimer*(screensize[0]*0.00109),screensize[1]*0.02))
                     else:
                         godumpingroom.set_alpha(80)
-
+            
+            #computer
             if ingamevars["action"] == "computerdesktop":
                 if computerimage.get_alpha() != 255:
                     computerimage.set_alpha(computerimage.get_alpha()+10)
@@ -878,7 +897,7 @@ while running:
                     if random.randint(0,4) == 0:
                         pygame.mixer.find_channel().play(occasionaldeovas)
                         occasionaldeovas.set_volume(0.1)
-                if ingamevars["deovaspos"] not in [12,21]:
+                if ingamevars["deovaspos"] not in [11,12,20,21]:
                     deovasdiscovered = False
                 if ingamevars["deovaspos"] == 20:
                     if not ingamevars["backdoor"]:
@@ -907,13 +926,11 @@ while running:
                         pygame.mixer_music.stop()
                 if ingamevars["deovaspos"] not in [20,21]:
                     moveloop = 300
-            #noite 1 vc tenta logar
-            #noite 2 vc clica pra recuperar a senha
-            #noite 3 vc pega a senha no email
+            #noite 1 vc tenta logar e clica pra recuperar a senha
+            #noite 2 vc pega a senha no email
+            #noite 3 vc loga com a senha provisoria
             #noite 4 vc redefine a senha
             #noite 5 vc coloca o captcha pra confirmar
-
-            #add som de deovas na porta
             if section == "night1":
                 if not init:
                     textinput0.value = ""
