@@ -170,7 +170,7 @@ dtime = vhsfont.render(f"{datetime.datetime.now().strftime('%H:%M')}", True, (25
 ddate = vhsfont.render(f"{datetime.datetime.now().strftime('%b.%d %Y')}", True, (255,255,255))
 title = vhsfontbig.render(f"FIVE NIGHTS AT DEOVAS'", True, (255,255,255))
 play = vhsfont.render(f"JOGAR", True, (255,255,255))
-currentnight = vhsfont.render(f"Segunda-Feira", True, (180,180,180))
+currentnight = vhsfont.render(f"Segunda-Feira", True, (110,110,110))
 exit = vhsfont.render(f"SAIR", True, (255,255,255))
 
 #game assets and vars
@@ -298,7 +298,7 @@ goodmorning = pgvideo("assets/videos/goodmorning.mp4",loop=False,audio=True)
 firstvideo = pgvideo(f"assets/videos/first.mp4",loop=False,audio=False)
 entryvideo = pgvideo("assets/videos/night1.mp4",loop=False,audio=True)
 
-occasionaldeovas = pygame.mixer.Sound("assets/audios/occasionaldeovas/gulpof87.mp3")
+occasionaldeovas = pygame.mixer.Sound("assets/audios/occasionaldeovas/deoba0.mp3")
 
 #start
 running = True
@@ -313,15 +313,15 @@ while running:
             play = vhsfont.render(f"JOGAR", True, (255,255,255))
             exit = vhsfont.render(f"SAIR", True, (255,255,255))
             if save["currentnight"] == 1:
-                currentnight = vhsfont.render(f"Segunda-Feira", True, (180,180,180))
+                currentnight = vhsfont.render(f"Segunda-Feira", True, (110,110,110))
             elif save["currentnight"] == 2:
-                currentnight = vhsfont.render(f"Terça-Feira", True, (180,180,180))
+                currentnight = vhsfont.render(f"Terça-Feira", True, (110,110,110))
             elif save["currentnight"] == 3:
-                currentnight = vhsfont.render(f"Quarta-Feira", True, (180,180,180))
+                currentnight = vhsfont.render(f"Quarta-Feira", True, (110,110,110))
             elif save["currentnight"] == 4:
-                currentnight = vhsfont.render(f"Quinta-Feira", True, (180,180,180))
+                currentnight = vhsfont.render(f"Quinta-Feira", True, (110,110,110))
             elif save["currentnight"] == 5:
-                currentnight = vhsfont.render(f"Sexta-Feira", True, (180,180,180))
+                currentnight = vhsfont.render(f"Sexta-Feira", True, (110,110,110))
             currentnight.set_alpha(0)
             currentnight = pygame.transform.scale_by(currentnight,0.5)
             if not pygame.mixer_music.get_busy():
@@ -895,6 +895,7 @@ while running:
                     olddeovaspos = ingamevars["deovaspos"]
                     ingamevars["deovaspos"] = deovasmovement(ingamevars["deovaspos"],ingamevars["difficulty"][0])
                     if random.randint(0,4) == 0:
+                        occasionaldeovas = pygame.mixer.Sound(f"assets/audios/occasionaldeovas/deoba{random.randint(0,1)}.mp3")
                         pygame.mixer.find_channel().play(occasionaldeovas)
                         occasionaldeovas.set_volume(0.1)
                 if ingamevars["deovaspos"] not in [11,12,20,21]:
