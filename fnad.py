@@ -325,9 +325,9 @@ while running:
             currentnight.set_alpha(0)
             currentnight = pygame.transform.scale_by(currentnight,0.5)
             if not pygame.mixer_music.get_busy():
-                pygame.mixer_music.load("assets/audios/menusongoriginal.wav")
+                pygame.mixer_music.load("assets/audios/menusong.mp3")
                 pygame.mixer_music.play()
-                pygame.mixer_music.set_volume(0.5)
+                pygame.mixer_music.set_volume(0.8)
             if pygame.mouse.get_pos()[0] > screensize[0]*0.45 and pygame.mouse.get_pos()[0] < screensize[0]*0.45+play.get_rect()[2] and \
                 pygame.mouse.get_pos()[1] > screensize[1]*0.4 and pygame.mouse.get_pos()[1] < screensize[1]*0.4+play.get_rect()[3]:
                     if not pygame.mouse.get_pressed()[0]:
