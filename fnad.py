@@ -92,7 +92,6 @@ class pgvideo:
         self.baseres = (self.video.get(cv2.CAP_PROP_FRAME_WIDTH),self.video.get(cv2.CAP_PROP_FRAME_HEIGHT))
         if self.audio and not glob.glob(f"tmp.{self.file.split('/')[-1].split('.')[0]}.mp3"):
             VideoFileClip(self.file).audio.write_audiofile(f"tmp.{self.file.split('/')[-1].split('.')[0]}.mp3")
-
     def frame(self):
         success, img = self.video.read()
         self.currentframe = self.video.get(cv2.CAP_PROP_POS_FRAMES)
@@ -106,6 +105,8 @@ class pgvideo:
             else:
                 self.ended = True
         return pygame.image.frombuffer(img.tobytes(), img.shape[1::-1], "BGR")
+    def randomizeframe(self):
+        self.video.set(cv2.CAP_PROP_POS_FRAMES, random.randint(1,self.framecount))
 
 def deovasmovement(pos, difficulty):
     if random.randint(0,50) < difficulty:
@@ -163,6 +164,7 @@ def resetigv(cellphone):
 resetigv("")
 #menu assets and vars        
 menuvideo = pgvideo("assets/videos/menu.mp4",loop=True,audio=False)
+deovavideo = pgvideo("assets/videos/deovamenu.mp4",loop=True,audio=False)
 testvideo = pgvideo("assets/videos/test.mp4",loop=True,audio=True)
 vhsfont = pygame.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", int(screensize[0]*0.031))
 vhsfontbig = pygame.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", int(screensize[0]*0.039))
@@ -322,6 +324,8 @@ while running:
                 currentnight = vhsfont.render(f"Quinta-Feira", True, (110,110,110))
             elif save["currentnight"] == 5:
                 currentnight = vhsfont.render(f"Sexta-Feira", True, (110,110,110))
+            elif save["currentnight"] == 6:
+                currentnight = vhsfont.render(f"Sábado", True, (110,110,110))
             currentnight.set_alpha(0)
             currentnight = pygame.transform.scale_by(currentnight,0.5)
             if not pygame.mixer_music.get_busy():
@@ -361,6 +365,9 @@ while running:
                     else:
                         running = False
 
+            screen.blit(pygame.transform.scale(deovavideo.frame(),screensize), (0, 0))
+            if random.randint(0,29) == 0 and deovavideo.currentframe != False:
+                deovavideo.randomizeframe()
             screen.blit(dtime, (screensize[0]*0.1,screensize[1]*0.766))
             screen.blit(ddate, (screensize[0]*0.1,screensize[1]*0.833))
             screen.blit(title, (screensize[0]*0.248,screensize[1]*0.1))
@@ -370,7 +377,7 @@ while running:
             screen.blit(exit, (screensize[0]*0.46,screensize[1]*0.6))
             if realframe == 2: # game/video fps difference fix
                 oldframe = pygame.transform.scale(menuvideo.frame(), screensize)
-                oldframe.set_alpha(120)
+                oldframe.set_alpha(50)
             screen.blit(oldframe, (0, 0))
 
         if section == "test":
@@ -414,7 +421,8 @@ while running:
             if ingamevars["time"] >= 29635:
                 if ingamevars["computerdone"] and not jumpscared:
                     if ingamevars["time"] == 29635:
-                        save["currentnight"] += 1
+                        if save["currentnight"] < 5:
+                            save["currentnight"] += 1
                         ingamevars["action"] = None
                         godumpingroom.set_alpha(0)
                         grabcell.set_alpha(0)
@@ -1067,6 +1075,13 @@ while running:
                             textinput1.update(events)
                     if len(inputfocus.value) != 0 and ord(inputfocus.value[-1]) == 9:
                         inputfocus.value = inputfocus.value[:-1]
+            if section == "night6":
+                if not init:
+                    ingamevars["difficulty"] = [0.1,0]
+                    init = True
+                else:
+                    moveloop = 1
+                    pygame.mixer.set_num_channels(999)
                                
     if realframe == 2:
         realframe = 0
