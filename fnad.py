@@ -106,9 +106,10 @@ class pgvideo:
                 self.ended = True
         return pygame.image.frombuffer(img.tobytes(), img.shape[1::-1], "BGR")
     def randomizeframe(self):
-        self.video.set(cv2.CAP_PROP_POS_FRAMES, random.randint(1,self.framecount))
+        self.video.set(cv2.CAP_PROP_POS_FRAMES, random.randint(1,self.framecount-1))
 
 def deovasmovement(pos, difficulty):
+    global cantcam
     if random.randint(0,50) < difficulty:
         if pos == 0:
             newpos = 3
@@ -126,6 +127,7 @@ def deovasmovement(pos, difficulty):
             newpos = 20
         elif pos == 12:
             newpos = 21
+        cantcam = random.randint(30,60)
     else:
         newpos = pos
     return newpos
@@ -278,6 +280,7 @@ currentcamnumber = phonefont.render(f"{ingamevars['cam']}", True, (255,255,255))
 camdelay = 0
 camdeovasin = []
 camdeovasout = []
+cantcam = 0
 
 for cam in range(5):
     camdeovasin.append(pygame.image.load(f"assets/sprites/cellphone/cams/deovasin/cellphone-cam{cam}.png").convert_alpha())
@@ -517,7 +520,7 @@ while running:
                 screen.blit(fanblades_,(screensize[0]*scenarioX+(screensize[0]*0.888)-int(fanblades_.get_width()/2),screensize[1]*0.34-int(fanblades_.get_height()/2)))
                 if cellphoneY < 1.05:
                     screen.blit(ingamevars["cellphonenow"],(screensize[0]*0.25,screensize[1]*cellphoneY))
-                    if ingamevars["cellphonenow"] == cellphonecams:
+                    if ingamevars["cellphonenow"] == cellphonecams and cantcam <= 0:
                         if ingamevars["deovaspos"] == ingamevars["cam"]:
                             screen.blit(camdeovasin[ingamevars["cam"]],(screensize[0]*0.25,screensize[1]*cellphoneY))
                         else:
@@ -720,6 +723,7 @@ while running:
                             ingamevars["cellphonenow"] = cellphoneflash
                         elif pygame.mouse.get_pos()[1] > screensize[1]*0.24 and pygame.mouse.get_pos()[1] < screensize[1]*0.36:
                             ingamevars["cellphonenow"] = cellphonecams
+                            cantcam = 10
                             cellphoneY -= 0.01
                             cellphonespeed -=0.01
                     elif ingamevars["action"] == "cellphone" and ingamevars["cellphonenow"] == cellphonehome and \
@@ -898,6 +902,7 @@ while running:
                         pygame.mixer_music.stop()
             #deovas ai
             moveloop -= 1
+            cantcam -=1
             if moveloop <= 0:
                 if moveloop == 0:
                     olddeovaspos = ingamevars["deovaspos"]
