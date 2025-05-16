@@ -1033,7 +1033,7 @@ while running:
                     if pygame.mouse.get_pos()[0] > screensize[0]*0.477 and pygame.mouse.get_pos()[0] < screensize[0]*0.576 and\
                         pygame.mouse.get_pos()[1] > screensize[1]*0.648 and pygame.mouse.get_pos()[1] < screensize[1]*0.710 and\
                         pygame.mouse.get_pressed()[0] and ingamevars["computerstage"] in [1,-1]:
-                            if textinput0.value == temppass and textinput1.value == "Pesca21797200769AB_O1":
+                            if textinput0.value == temppass and textinput1.value == "Pesca1797200769AB_O1":
                                 ingamevars["computerstage"] = 2
                                 computerbrowserstage = pygame.image.load(f"assets/images/computer/nightstages/{section[-1]}-{ingamevars['computerstage']}.png").convert_alpha()
                                 computerbrowserstage = pygame.transform.scale(computerbrowserstage,screensize)
