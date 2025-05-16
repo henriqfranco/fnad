@@ -106,7 +106,7 @@ class pgvideo:
                 self.ended = True
         return pygame.image.frombuffer(img.tobytes(), img.shape[1::-1], "BGR")
     def randomizeframe(self):
-        self.video.set(cv2.CAP_PROP_POS_FRAMES, random.randint(1,self.framecount-1))
+        self.video.set(cv2.CAP_PROP_POS_FRAMES, random.randint(1, int(self.framecount) - 1))
 
 def deovasmovement(pos, difficulty):
     global cantcam
