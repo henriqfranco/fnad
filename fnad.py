@@ -1087,7 +1087,7 @@ while running:
                 else:
                     moveloop = 1
                     pygame.mixer.set_num_channels(999)
-                               
+
     if realframe == 2:
         realframe = 0
     pygame.display.flip()
